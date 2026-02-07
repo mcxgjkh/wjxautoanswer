@@ -3,8 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>问卷星自动答题器 V7.0.1</title>
+    <title>问卷星自动答题器 V7.1.2</title>
     <style>
+        /* 美化滚动条样式 */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3); /* 改为统一的黑色背景 */
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+            border: 2px solid rgba(0, 0, 0, 0.3); /* 边框改为深色 */
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            border: 2px solid rgba(0, 0, 0, 0.5);
+        }
+        
+        ::-webkit-scrollbar-corner {
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 针对特定元素的滚动条 */
+        .status-panel::-webkit-scrollbar-track,
+        .bank-preview::-webkit-scrollbar-track,
+        .bank-editor textarea::-webkit-scrollbar-track,
+        .modal-body::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -433,7 +467,7 @@
         .bank-description {
             width: 100%;
             padding: 12px 15px;
-            margin-bottom: 15px;
+            margin-bottom: 10px; /* 减少下边距 */
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
@@ -476,6 +510,13 @@
             min-height: 300px;
         }
         
+        .editor-container-basic {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 50px;
+        }
+
         .editor-header {
             display: flex;
             justify-content: space-between;
@@ -690,13 +731,13 @@
     <div class="container">
         <div class="header">
             <h1>问卷星自动答题器</h1>
-            <div class="subtitle">V7.0.1 智能识别 | 题库管理版</div>
+            <div class="subtitle">V7.1.2 智能识别 | 题库管理版</div>
             <div class="version">Design By MCXGJKH</div>
         </div>
         
         <div class="config-panel">
             <div class="config-section">
-                <h2><i>🔗</i> 问卷配置</h2>
+                <h2>🔗 问卷配置</h2>
                 
                 <div class="url-input">
                     <div class="url-prefix">
@@ -708,7 +749,7 @@
                     </div>
                 </div>
                 
-                <h2><i>🎯</i> 正确率控制</h2>
+                <h2>✔️ 正确率控制</h2>
                 <div class="accuracy-control">
                     <div class="accuracy-slider-container">
                         <input type="range" min="0" max="100" value="100" class="accuracy-slider" id="accuracySlider">
@@ -734,7 +775,7 @@
             </div>
             
             <div class="config-section">
-                <h2><i>📚</i> 题库管理</h2>
+                <h2>📚 题库管理</h2>
                 
                 <div class="bank-manager">
                     <div class="bank-selector">
@@ -759,7 +800,7 @@
                     </div>
                 </div>
                 
-                <h2 style="margin-top: 30px;"><i>⚡</i> 速度选择</h2>
+                <h2 style="margin-top: 30px;">⚡ 速度选择</h2>
                 <div class="speed-options" id="speedOptions">
                     <!-- 速度选项由JS动态生成 -->
                 </div>
@@ -775,10 +816,11 @@
                     <li>3. 设置正确率 (0-100%，采用去一法保证实际正确率≥设定值)</li>
                     <li>4. 选择答题速度</li>
                     <li>5. 点击"打开问卷页面"按钮</li>
-                    <li>6. 等待页面加载完成后自动开始答题</li>
+                    <li>6. 等待页面加载完成后点击右下角“开始答题”</li>
                     <li>7. 答题完成后会弹出确认提交对话框</li>
                 </ul>
                 <p><strong>注意：</strong>本程序仅用于学习研究，请勿用于非法用途</p>
+                <p><strong>注意：</strong>下载者请在24小时内自行删除</p>
             </div>
         </div>
         
@@ -805,11 +847,11 @@
         </div>
         
         <div class="footer">
-            © 2026 MCXGJKH | 问卷星自动答题器 V7.0.1 - 题库管理版
+            © 2026 MCXGJKH | 问卷星自动答题器 V7.1.2 - 题库管理版
         </div>
     </div>
 
-    <!-- 题库编辑器模态框 -->
+    <!-- 题库编辑器模态框 - 已调整间距 -->
     <div class="modal" id="bankEditorModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -827,7 +869,21 @@
                         <input type="number" class="info-input" id="startQuestionNum" placeholder="起始题目编号" value="3" min="1" max="1000">
                     </div>
                     
-                    <div class="editor-container">
+                    <!-- 基础信息编辑框容器 - 已调整间距 -->
+                    <div class="editor-container-basic" id="basicInfoContainer" style="display: none; margin-bottom: 10px;">
+                        <div class="editor-header">
+                            <span>基础信息答案 (每行一个)</span>
+                        </div>
+                        <textarea id="basicInfoTextarea" placeholder="请输入基础信息答案，每行一个：
+例如：
+朱一龙
+901
+
+程序会自动将答案格式化为：['答案1'], ['答案2']" style="width: 100%;"></textarea>
+                    </div>
+                    
+                    <!-- 主答案填写框 - 已调整间距 -->
+                    <div class="editor-container" style="margin-top: 10px;">
                         <div class="editor-header">
                             <span>题目答案 (每行一个答案，程序会自动格式化为数组)</span>
                             <span id="currentLineCount">0 行</span>
@@ -923,6 +979,60 @@
         </div>
     </div>
 
+    <!-- 删除确认模态框 -->
+    <div class="modal" id="deleteConfirmModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 style="color: #f44336;">⚠️ 删除题库确认</h3>
+                <button class="close-modal" id="closeDeleteModalBtn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div style="color: #ccc; line-height: 1.6; text-align: center;">
+                    <div style="margin-bottom: 25px; font-size: 16px;">
+                        您确定要删除以下题库吗？
+                    </div>
+                    
+                    <div style="background: rgba(255, 255, 255, 0.05); padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 2px solid rgba(244, 67, 54, 0.3);">
+                        <div style="font-size: 24px; color: #f44336; font-weight: bold; margin-bottom: 10px; text-shadow: 0 0 10px rgba(244, 67, 54, 0.5);">
+                            <span id="deleteBankNameDisplay">题库名称</span>
+                        </div>
+                        <div style="font-size: 14px; color: #aaa; user-select: text; cursor: text; padding: 8px; background: rgba(0, 0, 0, 0.2); border-radius: 5px; margin-top: 10px;">
+                            <span id="deleteBankNameCopy">可复制此名称</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 25px; font-size: 16px;">
+                        此操作<b style="color: #f44336;">不可恢复</b>，请谨慎操作！
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="color: #FF9800; margin-bottom: 10px; font-size: 14px;">
+                            为确认删除，请在下方输入框中输入题库名称：
+                        </div>
+                        <input type="text" 
+                               id="confirmDeleteInput" 
+                               style="width: 100%; padding: 15px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: white; font-size: 16px; text-align: center;"
+                               placeholder="请输入题库名称以确认删除">
+                    </div>
+                    
+                    <div style="color: #888; font-size: 12px; margin-top: 15px;">
+                        提示：输入正确的题库名称后，删除按钮才会激活
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions" style="justify-content: center;">
+                <button class="btn btn-open" id="cancelDeleteBtn" style="flex: none; padding: 12px 30px; min-width: 120px;">
+                    取消
+                </button>
+                <button class="btn btn-stop" id="confirmDeleteBtn" style="flex: none; padding: 12px 30px; min-width: 120px; background: linear-gradient(135deg, #f44336 0%, #c62828 100%); opacity: 0.5; cursor: not-allowed;" disabled>
+                    确认删除
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // 速度配置（与answer-script.js保持一致）
         const SPEED_OPTIONS = [
@@ -998,6 +1108,7 @@
         let isEditingBank = false;
         let editingBankName = "";
         let maxLines = 100; // 初始最大行数
+        let bankToDelete = ""; // 要删除的题库名称
         
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
@@ -1006,9 +1117,83 @@
             loadBanksFromStorage();
             updateBankSelect();
             updateBankPreview();
-            log('程序初始化完成 V7.0.1', 'success');
+            // 添加快捷键提示
+            addKeyboardShortcutInfo();
+            // 监听键盘事件（可选，用于显示提示）
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F12') {
+                    console.log('F12按下：打开/关闭开发者工具');
+                    // 可以在这里显示一个短暂的通知
+                    showShortcutNotification('F12: 打开/关闭开发者工具');
+                }
+            });
+            log('程序初始化完成 V7.1.2', 'success');
         });
-        
+
+        // 在addKeyboardShortcutInfo函数中修改快捷键说明：
+        function addKeyboardShortcutInfo() {
+            // 在状态面板添加快捷键说明
+            const statusContent = document.getElementById('statusContent');
+            if (statusContent) {
+                const shortcutLog = document.createElement('div');
+                shortcutLog.className = 'log info';
+                shortcutLog.innerHTML = `
+                    <strong>V7.1.2 快捷键说明：</strong><br>
+                    • <b>F12</b>: 打开/关闭开发者工具（如无效请检查系统设置）<br>
+                    • <b>Ctrl+Shift+I</b>: 打开/关闭开发者工具（备用）<br>
+                    • <b>F5/Ctrl+R</b>: 刷新当前页面<br>
+                    • <b>Ctrl+Shift+R</b>: 硬刷新（清除缓存）<br>
+                    • <b>Alt+Left/Right</b>: 前进/后退<br>
+                    <em>提示：如F12无效，可能是系统快捷键冲突，请尝试Ctrl+Shift+I</em>
+                `;
+                statusContent.appendChild(shortcutLog);
+            }
+        }
+
+        // 显示快捷键通知
+        function showShortcutNotification(message) {
+            // 创建一个临时通知元素
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: rgba(102, 126, 234, 0.9);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-size: 14px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: fadeInOut 3s ease;
+            `;
+            
+            // 添加动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeInOut {
+                    0% { opacity: 0; transform: translateY(-20px); }
+                    10% { opacity: 1; transform: translateY(0); }
+                    90% { opacity: 1; transform: translateY(0); }
+                    100% { opacity: 0; transform: translateY(-20px); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            // 3秒后移除
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+                if (style.parentNode) {
+                    style.parentNode.removeChild(style);
+                }
+            }, 3000);
+        }
+
         // 渲染速度选项
         function renderSpeedOptions() {
             const container = document.getElementById('speedOptions');
@@ -1073,17 +1258,67 @@
                 updateBankPreview();
                 log(`已选择题库: ${selectedBank}`, 'success');
             });
+
+            // 添加键盘事件监听（页面内）
+            document.addEventListener('keydown', (e) => {
+                // F12键
+                if (e.key === 'F12') {
+                    e.preventDefault();
+                    
+                    // 通知主进程切换开发者工具
+                    if (window.electronAPI) {
+                        window.electronAPI.toggleDevTools().then(result => {
+                            if (result.success) {
+                                // 显示成功提示
+                                showShortcutNotification('开发者工具已切换');
+                                log('F12快捷键: 开发者工具已切换', 'success');
+                            } else {
+                                log(`F12快捷键失败: ${result.error}`, 'error');
+                                // 尝试备用方法
+                                backupF12Handler();
+                            }
+                        }).catch(error => {
+                            log(`F12快捷键错误: ${error.message}`, 'error');
+                            backupF12Handler();
+                        });
+                    } else {
+                        log('F12快捷键: electronAPI未加载，使用备用方法', 'warning');
+                        backupF12Handler();
+                    }
+                }
+                
+                // Ctrl+Shift+I或Cmd+Shift+I
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'I') {
+                    e.preventDefault();
+                    
+                    if (window.electronAPI) {
+                        window.electronAPI.toggleDevTools().then(result => {
+                            if (result.success) {
+                                showShortcutNotification('开发者工具已切换');
+                                log('Ctrl+Shift+I快捷键: 开发者工具已切换', 'success');
+                            }
+                        });
+                    }
+                }
+            });
             
             // 添加题库按钮
             document.getElementById('addBankBtn').addEventListener('click', () => {
                 isEditingBank = false;
                 editingBankName = "";
                 document.getElementById('modalTitle').textContent = '新建题库';
-                document.getElementById('bankNameInput').value = '新题库';
+                document.getElementById('bankNameInput').value = '';
                 document.getElementById('bankDescription').value = '';
-                document.getElementById('basicInfoCount').value = '2';
-                document.getElementById('startQuestionNum').value = '3';
+                document.getElementById('basicInfoCount').value = '';
+                document.getElementById('startQuestionNum').value = '';
                 document.getElementById('bankContentTextarea').value = '';
+                document.getElementById('basicInfoTextarea').value = '';
+                
+                // 默认显示基础信息编辑框
+                const basicInfoCount = parseInt(document.getElementById('basicInfoCount').value) || 0;
+                const basicInfoContainer = document.getElementById('basicInfoContainer');
+                basicInfoContainer.style.display = basicInfoCount > 0 ? 'block' : 'none';
+                
                 updateLineCount();
                 document.getElementById('bankEditorModal').style.display = 'flex';
             });
@@ -1105,8 +1340,14 @@
                 document.getElementById('basicInfoCount').value = bank.basicInfoCount || 2;
                 document.getElementById('startQuestionNum').value = bank.startQuestionNum || 3;
                 
+                // 显示或隐藏基础信息编辑框
+                const basicInfoCount = bank.basicInfoCount || 0;
+                const basicInfoContainer = document.getElementById('basicInfoContainer');
+                basicInfoContainer.style.display = basicInfoCount > 0 ? 'block' : 'none';
+                
                 // 将题库答案转换为文本格式
-                let text = '';
+                let basicInfoText = '';
+                let questionText = '';
                 const answers = bank.answers || {};
                 
                 // 获取题目编号并排序
@@ -1115,43 +1356,57 @@
                     .map(Number)
                     .sort((a, b) => a - b);
                 
+                // 提取基础信息答案
+                for (let i = 1; i <= basicInfoCount; i++) {
+                    if (answers[i] && answers[i].length > 0) {
+                        basicInfoText += answers[i][0] + '\n';
+                    }
+                }
+                
                 // 从起始题目编号开始输出
                 const startNum = bank.startQuestionNum || 3;
                 for (let i = startNum; i <= Math.max(...questionNumbers); i++) {
                     if (answers[i] && answers[i].length > 0) {
-                        text += answers[i][0] + '\n';
+                        questionText += answers[i][0] + '\n';
                     }
                 }
                 
-                document.getElementById('bankContentTextarea').value = text.trim();
+                document.getElementById('basicInfoTextarea').value = basicInfoText.trim();
+                document.getElementById('bankContentTextarea').value = questionText.trim();
                 updateLineCount();
                 document.getElementById('bankEditorModal').style.display = 'flex';
             });
             
-            // 删除题库按钮
+            // 删除题库按钮 - 修改为打开确认模态框
             document.getElementById('deleteBankBtn').addEventListener('click', () => {
                 if (selectedBank === DEFAULT_QUESTION_BANK.name) {
                     log('默认题库不能删除', 'error');
+                    alert('默认题库不能删除，如需删除请先创建其他题库。');
                     return;
                 }
                 
                 if (Object.keys(questionBanks).length <= 1) {
                     log('不能删除最后一个自定义题库', 'error');
+                    alert('不能删除最后一个自定义题库，请至少保留一个题库。');
                     return;
                 }
                 
-                if (confirm(`确定要删除题库 "${selectedBank}" 吗？此操作不可恢复。`)) {
-                    delete questionBanks[selectedBank];
-                    saveBanksToStorage();
-                    updateBankSelect();
-                    
-                    // 选择另一个题库
-                    selectedBank = Object.keys(questionBanks)[0];
-                    bankSelect.value = selectedBank;
-                    updateBankPreview();
-                    
-                    log(`已删除题库: ${selectedBank}`, 'success');
-                }
+                // 设置要删除的题库名称
+                bankToDelete = selectedBank;
+                
+                // 更新确认模态框内容
+                document.getElementById('deleteBankNameDisplay').textContent = bankToDelete;
+                document.getElementById('deleteBankNameCopy').textContent = bankToDelete;
+                document.getElementById('confirmDeleteInput').value = '';
+                
+                // 重置删除按钮状态
+                const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+                confirmDeleteBtn.disabled = true;
+                confirmDeleteBtn.style.opacity = '0.5';
+                confirmDeleteBtn.style.cursor = 'not-allowed';
+                
+                // 显示确认模态框
+                document.getElementById('deleteConfirmModal').style.display = 'flex';
             });
             
             // 题库信息按钮
@@ -1201,15 +1456,42 @@
             document.getElementById('closeInfoModalBtn').addEventListener('click', closeBankInfo);
             document.getElementById('closeInfoBtn').addEventListener('click', closeBankInfo);
             
-            // 题库内容文本区域
-            const textarea = document.getElementById('bankContentTextarea');
-            textarea.addEventListener('input', function() {
-                updateLineCount();
-                autoExpandTextarea(this);
+            // 删除确认模态框相关
+            document.getElementById('closeDeleteModalBtn').addEventListener('click', closeDeleteConfirm);
+            document.getElementById('cancelDeleteBtn').addEventListener('click', closeDeleteConfirm);
+            document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDeleteBank);
+            
+            // 删除确认输入框监听
+            document.getElementById('confirmDeleteInput').addEventListener('input', function() {
+                const inputValue = this.value.trim();
+                const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+                
+                // 检查输入是否与题库名称完全一致
+                if (inputValue === bankToDelete) {
+                    confirmDeleteBtn.disabled = false;
+                    confirmDeleteBtn.style.opacity = '1';
+                    confirmDeleteBtn.style.cursor = 'pointer';
+                    confirmDeleteBtn.style.boxShadow = '0 10px 25px rgba(244, 67, 54, 0.3)';
+                } else {
+                    confirmDeleteBtn.disabled = true;
+                    confirmDeleteBtn.style.opacity = '0.5';
+                    confirmDeleteBtn.style.cursor = 'not-allowed';
+                    confirmDeleteBtn.style.boxShadow = 'none';
+                }
             });
             
-            // 基础信息题数输入验证
+            // 基础信息题数输入监听 - 控制基础信息编辑框显示
             document.getElementById('basicInfoCount').addEventListener('input', function() {
+                const basicInfoCount = parseInt(this.value) || 0;
+                const basicInfoContainer = document.getElementById('basicInfoContainer');
+                
+                if (basicInfoCount > 0) {
+                    basicInfoContainer.style.display = 'block';
+                } else {
+                    basicInfoContainer.style.display = 'none';
+                }
+                
+                // 验证输入
                 const value = parseInt(this.value) || 0;
                 if (value < 0) this.value = 0;
                 if (value > 20) this.value = 20;
@@ -1221,6 +1503,21 @@
                 if (value < 1) this.value = 1;
                 if (value > 1000) this.value = 1000;
             });
+            
+            // 题库内容文本区域
+            const textarea = document.getElementById('bankContentTextarea');
+            textarea.addEventListener('input', function() {
+                updateLineCount();
+                autoExpandTextarea(this);
+            });
+            
+            // 基础信息文本区域
+            const basicInfoTextarea = document.getElementById('basicInfoTextarea');
+            if (basicInfoTextarea) {
+                basicInfoTextarea.addEventListener('input', function() {
+                    // 可以添加基础信息文本区域的相关处理
+                });
+            }
             
             // 打开问卷页面按钮
             document.getElementById('btnOpen').addEventListener('click', openWjxPage);
@@ -1256,6 +1553,30 @@
                 window.electronAPI.onWjxError((error) => {
                     log(`页面加载错误: ${error}`, 'error');
                 });
+            }
+        }
+
+        // 备用F12处理方法
+        function backupF12Handler() {
+            // 尝试直接调用console打开（在某些环境下可能有效）
+            console.log('正在尝试打开开发者工具...');
+            
+            // 尝试触发调试器（在开发者工具中有效）
+            try {
+                // 尝试多种方法
+                if (typeof window.devtools !== 'undefined') {
+                    window.devtools.open();
+                }
+                
+                // 显示用户提示
+                showShortcutNotification('请检查系统快捷键设置或使用Ctrl+Shift+I');
+                
+                // 在状态栏添加帮助信息
+                const helpMsg = '如果F12无效，请尝试: 1) 检查系统快捷键设置 2) 使用Ctrl+Shift+I 3) 右键点击页面选择"检查"';
+                log(helpMsg, 'warning');
+                
+            } catch (error) {
+                console.warn('备用F12处理方法失败:', error);
             }
         }
         
@@ -1469,13 +1790,43 @@
             document.getElementById('bankInfoModal').style.display = 'none';
         }
         
+        // 关闭删除确认模态框
+        function closeDeleteConfirm() {
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+            bankToDelete = "";
+        }
+        
+        // 确认删除题库
+        function confirmDeleteBank() {
+            if (!bankToDelete || bankToDelete === "") {
+                log('错误: 未指定要删除的题库', 'error');
+                return;
+            }
+            
+            // 从题库中删除
+            delete questionBanks[bankToDelete];
+            saveBanksToStorage();
+            updateBankSelect();
+            
+            // 选择另一个题库
+            selectedBank = Object.keys(questionBanks)[0];
+            document.getElementById('bankSelect').value = selectedBank;
+            updateBankPreview();
+            
+            log(`已删除题库: ${bankToDelete}`, 'success');
+            
+            // 关闭确认模态框
+            closeDeleteConfirm();
+        }
+        
         // 保存题库
         function saveBank() {
             const bankName = document.getElementById('bankNameInput').value.trim();
             const description = document.getElementById('bankDescription').value.trim();
-            const basicInfoCount = parseInt(document.getElementById('basicInfoCount').value) || 2;
+            const basicInfoCount = parseInt(document.getElementById('basicInfoCount').value) || 0;
             const startQuestionNum = parseInt(document.getElementById('startQuestionNum').value) || 3;
-            const content = document.getElementById('bankContentTextarea').value.trim();
+            const basicInfoContent = document.getElementById('basicInfoTextarea').value.trim();
+            const questionContent = document.getElementById('bankContentTextarea').value.trim();
             
             if (!bankName) {
                 log('错误: 题库名称不能为空', 'error');
@@ -1487,20 +1838,28 @@
                 return;
             }
             
-            // 解析内容为答案格式
-            const lines = content.split('\n').filter(line => line.trim() !== '');
+            // 解析基础信息答案
             const answers = {};
             
-            // 添加基础信息（如果有）
-            if (basicInfoCount > 0) {
-                // 这里可以根据需要添加基础信息的答案
-                // 目前留空，由用户在实际使用时填写
+            // 添加基础信息答案
+            if (basicInfoCount > 0 && basicInfoContent) {
+                const basicInfoLines = basicInfoContent.split('\n').filter(line => line.trim() !== '');
+                
+                for (let i = 1; i <= Math.min(basicInfoCount, basicInfoLines.length); i++) {
+                    const answerText = basicInfoLines[i-1].trim();
+                    if (answerText) {
+                        answers[i.toString()] = [answerText];
+                    }
+                }
             }
+            
+            // 解析题目内容为答案格式
+            const questionLines = questionContent.split('\n').filter(line => line.trim() !== '');
             
             // 从起始编号开始添加答案
             let currentQuestionNum = startQuestionNum;
             
-            lines.forEach((line, index) => {
+            questionLines.forEach((line, index) => {
                 if (currentQuestionNum > 1000) {
                     log(`警告: 题目数量超过1000条限制，第${index + 1}行之后的内容将被忽略`, 'warning');
                     return;

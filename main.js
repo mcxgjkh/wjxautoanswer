@@ -16,9 +16,10 @@ function createMainWindow() {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
             contextIsolation: true,
-            webSecurity: false
+            webSecurity: false,
+            devTools: true
         },
-        title: '问卷星自动答题器 V7.0.1 - 题库管理版',
+        title: '问卷星自动答题器 V7.1.2 - 题库管理版',
         show: false
     });
 
@@ -30,9 +31,31 @@ function createMainWindow() {
     // 窗口就绪后显示
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
+        
         // 开发模式下打开DevTools
         if (process.env.NODE_ENV === 'development') {
             mainWindow.webContents.openDevTools();
+        }
+    });
+    
+    // 监听主窗口键盘事件
+    mainWindow.webContents.on('before-input-event', (event, input) => {
+        // F12键检测
+        if (input.key === 'F12' && input.type === 'keyDown') {
+            event.preventDefault();
+            toggleDevTools(mainWindow);
+        }
+        
+        // Ctrl+Shift+I检测
+        if (input.key === 'I' && input.control && input.shift && !input.alt && !input.meta) {
+            event.preventDefault();
+            toggleDevTools(mainWindow);
+        }
+        
+        // Cmd+Shift+I检测 (macOS)
+        if (input.key === 'I' && input.meta && input.shift && !input.alt && !input.control) {
+            event.preventDefault();
+            toggleDevTools(mainWindow);
         }
     });
     
@@ -43,6 +66,8 @@ function createMainWindow() {
             wjxWindow.close();
         }
     });
+
+    return mainWindow;
 }
 
 // 创建问卷星窗口
@@ -71,9 +96,30 @@ function createWjxWindow(config) {
     
     // 构建问卷URL
     const wjxUrl = `https://ks.wjx.com/vm/${config.urlSuffix}`;
-    console.log('V7.0.1 - 加载问卷页面:', wjxUrl);
+    console.log('V7.1.2 - 加载问卷页面:', wjxUrl);
     
     wjxWindow.loadURL(wjxUrl);
+    
+    // 监听问卷窗口键盘事件
+    wjxWindow.webContents.on('before-input-event', (event, input) => {
+        // F12键检测
+        if (input.key === 'F12' && input.type === 'keyDown') {
+            event.preventDefault();
+            toggleDevTools(wjxWindow);
+        }
+        
+        // Ctrl+Shift+I检测
+        if (input.key === 'I' && input.control && input.shift && !input.alt && !input.meta) {
+            event.preventDefault();
+            toggleDevTools(wjxWindow);
+        }
+        
+        // Cmd+Shift+I检测 (macOS)
+        if (input.key === 'I' && input.meta && input.shift && !input.alt && !input.control) {
+            event.preventDefault();
+            toggleDevTools(wjxWindow);
+        }
+    });
     
     // 监听页面加载完成
     wjxWindow.webContents.on('did-finish-load', async () => {
@@ -87,7 +133,7 @@ function createWjxWindow(config) {
             
             // 创建注入脚本
             const injectScript = `
-                // 注入配置 V7.0.1
+                // 注入配置 V7.1.2
                 window.ElectronSpeedConfig = ${JSON.stringify(config.speedConfig)};
                 window.ElectronAccuracy = ${config.accuracy / 100};
                 window.ElectronAnswers = ${JSON.stringify(config.answers || {})};
@@ -112,34 +158,55 @@ function createWjxWindow(config) {
             await wjxWindow.webContents.executeJavaScript(injectScript);
             
             // 通知主窗口
-            mainWindow.webContents.send('wjx-loaded', true);
+            if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('wjx-loaded', true);
+            }
             
             console.log('答题脚本注入成功');
             
         } catch (error) {
             console.error('注入脚本失败:', error);
-            mainWindow.webContents.send('wjx-loaded', false, error.message);
+            if (mainWindow && !mainWindow.isDestroyed()) {
+                mainWindow.webContents.send('wjx-loaded', false, error.message);
+            }
         }
     });
     
     // 页面加载失败
     wjxWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
         console.error('页面加载失败:', errorCode, errorDescription);
-        mainWindow.webContents.send('wjx-error', errorDescription);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('wjx-error', errorDescription);
+        }
     });
     
     // 窗口关闭事件
     wjxWindow.on('closed', () => {
         wjxWindow = null;
-        mainWindow.webContents.send('wjx-closed');
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('wjx-closed');
+        }
     });
-    
+
     // 打开DevTools（开发模式）
     if (process.env.NODE_ENV === 'development') {
         wjxWindow.webContents.openDevTools();
     }
     
     return wjxWindow;
+}
+
+// 切换开发者工具
+function toggleDevTools(window) {
+    if (window && !window.isDestroyed()) {
+        if (window.webContents.isDevToolsOpened()) {
+            window.webContents.closeDevTools();
+            console.log('开发者工具已关闭');
+        } else {
+            window.webContents.openDevTools();
+            console.log('开发者工具已打开');
+        }
+    }
 }
 
 // 应用准备就绪
@@ -162,7 +229,7 @@ app.on('window-all-closed', () => {
 
 // IPC通信处理
 ipcMain.handle('open-wjx', async (event, config) => {
-    console.log('V7.0.1 - 打开问卷页面，配置:', {
+    console.log('V7.1.2 - 打开问卷页面，配置:', {
         speed: config.speedConfig.name,
         accuracy: config.accuracy,
         urlSuffix: config.urlSuffix,
@@ -199,6 +266,61 @@ ipcMain.handle('close-wjx', async () => {
         return { success: true };
     }
     return { success: false, error: '问卷窗口未打开' };
+});
+
+// 开发者工具相关IPC
+ipcMain.handle('toggle-dev-tools', async (event, windowType = 'focused') => {
+    let targetWindow = null;
+    
+    if (windowType === 'main' && mainWindow && !mainWindow.isDestroyed()) {
+        targetWindow = mainWindow;
+    } else if (windowType === 'wjx' && wjxWindow && !wjxWindow.isDestroyed()) {
+        targetWindow = wjxWindow;
+    } else {
+        targetWindow = BrowserWindow.getFocusedWindow();
+    }
+    
+    if (targetWindow) {
+        toggleDevTools(targetWindow);
+        return { success: true };
+    }
+    return { success: false, error: '没有活动窗口' };
+});
+
+ipcMain.handle('open-dev-tools', async (event, windowType = 'focused') => {
+    let targetWindow = null;
+    
+    if (windowType === 'main' && mainWindow && !mainWindow.isDestroyed()) {
+        targetWindow = mainWindow;
+    } else if (windowType === 'wjx' && wjxWindow && !wjxWindow.isDestroyed()) {
+        targetWindow = wjxWindow;
+    } else {
+        targetWindow = BrowserWindow.getFocusedWindow();
+    }
+    
+    if (targetWindow) {
+        targetWindow.webContents.openDevTools();
+        return { success: true };
+    }
+    return { success: false, error: '没有活动窗口' };
+});
+
+ipcMain.handle('close-dev-tools', async (event, windowType = 'focused') => {
+    let targetWindow = null;
+    
+    if (windowType === 'main' && mainWindow && !mainWindow.isDestroyed()) {
+        targetWindow = mainWindow;
+    } else if (windowType === 'wjx' && wjxWindow && !wjxWindow.isDestroyed()) {
+        targetWindow = wjxWindow;
+    } else {
+        targetWindow = BrowserWindow.getFocusedWindow();
+    }
+    
+    if (targetWindow) {
+        targetWindow.webContents.closeDevTools();
+        return { success: true };
+    }
+    return { success: false, error: '没有活动窗口' };
 });
 
 // 打开外部链接

@@ -1,23 +1,22 @@
 {
   "name": "wjx-auto-answer",
-  "version": "7.0.1",
-  "description": "问卷星自动答题器 V7.0.1 - Design By MCXGJKH (AGPL-3.0 Licensed)",
+  "version": "7.1.2",
+  "description": "问卷星自动答题器 V7.1.2 - Design By MCXGJKH",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build:win": "electron-builder --win --x64",
-    "build:win32": "electron-builder --win --xia32",
-    "build:mac": "electron-builder --mac",
-    "build:linux": "electron-builder --linux",
-    "pack": "electron-builder --dir"
+    "dev": "set NODE_ENV=development && electron .",
+    "prod": "set NODE_ENV=production && electron .",
+    "build:win": "electron-builder --win nsis --x64",
+    "build:win32": "electron-builder --win nsis --ia32",
+    "build:portable": "electron-builder --win portable --x64",
+    "build:portable32": "electron-builder --win portable --ia32",
+    "build:standard": "npm run build:win && npm run build:win32",
+    "build:portable-all": "npm run build:portable && npm run build:portable32",
+    "build:all": "npm run clean && npm run build:portable && npm run build:portable32 && npm run build:win && npm run build:win32",
+    "clean": "rm -rf build"
   },
-  "keywords": [
-    "问卷星",
-    "自动答题",
-    "题库管理",
-    "正确率控制",
-    "AGPL-3.0"
-  ],
+  "keywords": ["问卷星", "自动答题", "题库管理"],
   "author": "MCXGJKH",
   "license": "AGPL-3.0",
   "devDependencies": {
@@ -25,9 +24,9 @@
     "electron-builder": "^24.6.0"
   },
   "build": {
-    "appId": "com.mcxgjk.wjxautoanswer",
-    "productName": "问卷星自动答题器 V7.0.1 (AGPL-3.0)",
-    "copyright": "Copyright © 2026 MCXGJKH - Licensed under AGPL-3.0",
+    "appId": "com.mcxgjkh.wjxautoanswer",
+    "productName": "问卷星自动答题器 V7.1.2",
+    "copyright": "Copyright © 2026 MCXGJKH",
     "directories": {
       "output": "dist"
     },
@@ -35,45 +34,53 @@
       "**/*",
       "!node_modules",
       "!dist",
+      "!release",
       "!.git",
       "!*.md",
-      "!LICENSE",
-      "!*.license"
+      "!*.log"
     ],
+    
+    "extraResources": [
+      {
+        "from": "icon.ico",
+        "to": "icon.ico"
+      },
+      {
+        "from": "LICENSE",
+        "to": "LICENSE"
+      }
+    ],
+    
     "win": {
-      "target": "nsis",
       "icon": "icon.ico",
-      "requestedExecutionLevel": "asInvoker",
-      "legalTrademarks": "AGPL-3.0 Licensed"
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        }
+      ]
     },
+    
+    "portable": {
+      "artifactName": "${productName} ${arch} 便携版.${ext}",
+      "requestExecutionLevel": "user"
+    },
+    
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "问卷星答题器 V7.0.1 (AGPL-3.0)",
-      "license": "LICENSE"
+      "shortcutName": "问卷星答题器 ${version}",
+      "artifactName": "${productName} ${version} ${arch} 安装版.${ext}"
     },
-    "mac": {
-      "category": "public.app-category.utilities",
-      "icon": "icon.icns",
-      "entitlements": "./build/entitlements.mac.plist",
-      "entitlementsInherit": "./build/entitlements.mac.plist",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false
-    },
-    "linux": {
-      "target": "AppImage",
-      "category": "Utility",
-      "synopsis": "问卷星自动答题器 (AGPL-3.0)",
-      "description": "基于Electron的问卷星自动答题工具，采用AGPL-3.0许可证"
-    },
-    "publish": null,
-    "extraResources": [
-      {
-        "from": "LICENSE",
-        "to": "LICENSE"
-      }
-    ]
+    
+    "asar": true,
+    "compression": "maximum",
+    "removePackageScripts": true
   }
 }
