@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>问卷星自动答题器 V7.0.1</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 1200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .header .subtitle {
+            color: #8a8aff;
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+        
+        .header .version {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .config-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .config-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 25px;
+        }
+        
+        .config-section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #8a8aff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .config-section h2 i {
+            font-size: 20px;
+        }
+        
+        /* 问卷链接输入样式 */
+        .url-input {
+            margin-bottom: 20px;
+        }
+        
+        .url-prefix {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-size: 14px;
+        }
+        
+        .url-prefix .prefix {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin-right: 10px;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .url-input-field {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .url-input-field input {
+            flex: 1;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .url-input-field input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        /* 正确率控制样式 */
+        .accuracy-control {
+            margin-bottom: 20px;
+        }
+        
+        .accuracy-slider-container {
+            position: relative;
+            margin: 20px 0;
+        }
+        
+        .accuracy-slider {
+            width: 100%;
+            height: 8px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            outline: none;
+        }
+        
+        .accuracy-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 10px rgba(102, 126, 234, 0.8);
+        }
+        
+        .accuracy-ticks {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #ccc;
+        }
+        
+        .accuracy-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .accuracy-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+            text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+        
+        .accuracy-info {
+            color: #ccc;
+            font-size: 12px;
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 6px;
+        }
+        
+        /* 题库管理样式 */
+        .bank-manager {
+            margin-bottom: 20px;
+        }
+        
+        .bank-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .bank-select {
+            flex: 1;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .bank-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+        
+        .bank-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .bank-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .bank-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .bank-btn.delete {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+        
+        .bank-btn.delete:hover {
+            box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
+        }
+        
+        .bank-btn.edit {
+            background: linear-gradient(135deg, #2196F3 0%, #0D47A1 100%);
+        }
+        
+        .bank-btn.edit:hover {
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.4);
+        }
+        
+        .bank-btn.info {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            width: 30px;
+            height: 30px;
+            font-size: 16px;
+        }
+        
+        .bank-preview {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .bank-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .bank-stats {
+            color: #8a8aff;
+            font-size: 14px;
+        }
+        
+        .bank-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .bank-item {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'Consolas', monospace;
+            border-left: 3px solid #667eea;
+            word-break: break-word;
+        }
+        
+        /* 速度选择样式 */
+        .speed-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .speed-option {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .speed-option:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            background: rgba(102, 126, 234, 0.1);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+        
+        .speed-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        
+        .speed-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        
+        .speed-desc {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        /* 题库编辑器模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 1000px;
+            max-height: 85vh;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            color: #8a8aff;
+            font-size: 22px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            color: #ccc;
+            font-size: 28px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-modal:hover {
+            color: #f44336;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+        }
+        
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .bank-editor {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .bank-name-input {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+        }
+        
+        .bank-name-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .bank-description {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            min-height: 60px;
+            resize: vertical;
+        }
+        
+        .bank-description:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .bank-info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .info-input {
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .info-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 300px;
+        }
+        
+        .editor-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #ccc;
+            font-size: 14px;
+        }
+        
+        .editor-header span {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        .bank-editor textarea {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+        }
+        
+        .bank-editor textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .editor-info {
+            color: #ccc;
+            font-size: 12px;
+            margin-top: 10px;
+            text-align: right;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        /* 控制面板样式 */
+        .control-panel {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn-open {
+            background: linear-gradient(135deg, #2196F3 0%, #0D47A1 100%);
+            color: white;
+        }
+        
+        .btn-open:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(33, 150, 243, 0.3);
+        }
+        
+        .btn-start {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+        
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(76, 175, 80, 0.3);
+        }
+        
+        .btn-stop {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+            color: white;
+        }
+        
+        .btn-stop:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(244, 67, 54, 0.3);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* 状态面板样式 */
+        .status-panel {
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .status-header h3 {
+            color: #8a8aff;
+            font-size: 18px;
+        }
+        
+        .status-content {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
+        .log {
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .log.info { color: #2196F3; }
+        .log.success { color: #4CAF50; }
+        .log.warning { color: #FF9800; }
+        .log.error { color: #f44336; }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 1024px) {
+            .config-panel {
+                grid-template-columns: 1fr;
+            }
+            
+            .bank-info-row {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .speed-options {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .control-panel {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+            }
+            
+            .bank-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .bank-btn {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            
+            .bank-items {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>问卷星自动答题器</h1>
+            <div class="subtitle">V7.0.1 智能识别 | 题库管理版</div>
+            <div class="version">Design By MCXGJKH</div>
+        </div>
+        
+        <div class="config-panel">
+            <div class="config-section">
+                <h2><i>🔗</i> 问卷配置</h2>
+                
+                <div class="url-input">
+                    <div class="url-prefix">
+                        <span class="prefix">https://ks.wjx.com/vm/</span>
+                        <span>问卷链接后缀</span>
+                    </div>
+                    <div class="url-input-field">
+                        <input type="text" id="urlSuffix" placeholder="wRSroLM.aspx" value="wRSroLM.aspx">
+                    </div>
+                </div>
+                
+                <h2><i>🎯</i> 正确率控制</h2>
+                <div class="accuracy-control">
+                    <div class="accuracy-slider-container">
+                        <input type="range" min="0" max="100" value="100" class="accuracy-slider" id="accuracySlider">
+                        <div class="accuracy-ticks">
+                            <span>0%</span>
+                            <span>25%</span>
+                            <span>50%</span>
+                            <span>75%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+                    <div class="accuracy-display">
+                        <span>设定正确率:</span>
+                        <span class="accuracy-value" id="accuracyValue">100%</span>
+                    </div>
+                    <div class="accuracy-info">
+                        <strong>去一法计算规则：</strong><br>
+                        正确题数 = ceil(有效题目数 × 正确率%)<br>
+                        有效题目数 = 总题目数 - 基础信息填写题数<br>
+                        实际正确率 ≥ 设定正确率
+                    </div>
+                </div>
+            </div>
+            
+            <div class="config-section">
+                <h2><i>📚</i> 题库管理</h2>
+                
+                <div class="bank-manager">
+                    <div class="bank-selector">
+                        <select class="bank-select" id="bankSelect">
+                            <!-- 题库选项由JS动态生成 -->
+                        </select>
+                        <div class="bank-buttons">
+                            <button class="bank-btn" id="addBankBtn" title="添加新题库">+</button>
+                            <button class="bank-btn edit" id="editBankBtn" title="编辑当前题库">✏️</button>
+                            <button class="bank-btn delete" id="deleteBankBtn" title="删除当前题库">-</button>
+                            <button class="bank-btn info" id="bankInfoBtn" title="题库信息">i</button>
+                        </div>
+                    </div>
+                    
+                    <div class="bank-preview" id="bankPreview">
+                        <div class="bank-header">
+                            <div class="bank-stats">正在加载题库信息...</div>
+                        </div>
+                        <div class="bank-items">
+                            <div class="bank-item">正在加载题目预览...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <h2 style="margin-top: 30px;"><i>⚡</i> 速度选择</h2>
+                <div class="speed-options" id="speedOptions">
+                    <!-- 速度选项由JS动态生成 -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-box" style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 25px; margin-bottom: 20px;">
+            <h3 style="color: #8a8aff; margin-bottom: 15px; font-size: 20px;">使用说明</h3>
+            <div style="color: #ccc; line-height: 1.6;">
+                <ul style="padding-left: 20px; margin: 10px 0;">
+                    <li>1. 输入问卷链接后缀 (如: wRSroLM.aspx)</li>
+                    <li>2. 选择或创建题库 (支持最多1000条题目，每100行自动扩展)</li>
+                    <li>3. 设置正确率 (0-100%，采用去一法保证实际正确率≥设定值)</li>
+                    <li>4. 选择答题速度</li>
+                    <li>5. 点击"打开问卷页面"按钮</li>
+                    <li>6. 等待页面加载完成后自动开始答题</li>
+                    <li>7. 答题完成后会弹出确认提交对话框</li>
+                </ul>
+                <p><strong>注意：</strong>本程序仅用于学习研究，请勿用于非法用途</p>
+            </div>
+        </div>
+        
+        <div class="control-panel">
+            <button class="btn btn-open" id="btnOpen">
+                打开问卷页面
+            </button>
+            <button class="btn btn-start" id="btnStart" disabled>
+                <span class="loading" style="display: none;"></span>
+                开始自动答题
+            </button>
+        </div>
+        
+        <div class="status-panel">
+            <div class="status-header">
+                <h3>状态信息</h3>
+                <button onclick="clearLogs()" style="background:none;border:1px solid #666;color:#666;padding:5px 10px;border-radius:5px;font-size:12px;cursor:pointer;">
+                    清空日志
+                </button>
+            </div>
+            <div class="status-content" id="statusContent">
+                <div class="log info">程序已启动，等待操作...</div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            © 2026 MCXGJKH | 问卷星自动答题器 V7.0.1 - 题库管理版
+        </div>
+    </div>
+
+    <!-- 题库编辑器模态框 -->
+    <div class="modal" id="bankEditorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">编辑题库</h3>
+                <button class="close-modal" id="closeModalBtn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="bank-editor">
+                    <input type="text" class="bank-name-input" id="bankNameInput" placeholder="题库名称" value="新题库">
+                    <textarea class="bank-description" id="bankDescription" placeholder="题库描述 (可选)"></textarea>
+                    
+                    <div class="bank-info-row">
+                        <input type="number" class="info-input" id="basicInfoCount" placeholder="基础信息填写题数" value="2" min="0" max="20">
+                        <input type="number" class="info-input" id="startQuestionNum" placeholder="起始题目编号" value="3" min="1" max="1000">
+                    </div>
+                    
+                    <div class="editor-container">
+                        <div class="editor-header">
+                            <span>题目答案 (每行一个答案，程序会自动格式化为数组)</span>
+                            <span id="currentLineCount">0 行</span>
+                        </div>
+                        <textarea id="bankContentTextarea" placeholder="请输入题目答案，每行一个答案：
+例如：
+提纯后所得精盐未完全干燥
+蒸发皿
+有气泡产生
+
+程序会自动将答案格式化为：['答案1', '答案2', '答案3']
+并自动添加常见的字母选项格式如：['答案1', 'A 答案1']
+
+系统支持最多1000行，每100行自动扩展文本框"></textarea>
+                    </div>
+                    
+                    <div class="editor-info">
+                        <span id="maxLinesInfo">最大支持: 100 行</span>
+                        <span> | </span>
+                        <span>已使用: <span id="usedLines">0</span> 行</span>
+                        <span> | </span>
+                        <span>剩余: <span id="remainingLines">100</span> 行</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-open" id="cancelEditBtn" style="flex: none; padding: 12px 25px;">
+                    取消
+                </button>
+                <button class="btn btn-start" id="saveBankBtn" style="flex: none; padding: 12px 25px;">
+                    保存题库
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 题库信息模态框 -->
+    <div class="modal" id="bankInfoModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="infoModalTitle">题库信息</h3>
+                <button class="close-modal" id="closeInfoModalBtn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="bankInfoContent" style="color: #ccc; line-height: 1.6;">
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #8a8aff; margin-bottom: 10px;" id="infoBankName">题库名称</h4>
+                        <p id="infoBankDescription">暂无描述</p>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                            <div style="color: #8a8aff; font-size: 12px;">总题目数</div>
+                            <div style="font-size: 24px; font-weight: bold;" id="infoTotalQuestions">0</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                            <div style="color: #8a8aff; font-size: 12px;">有效题目数</div>
+                            <div style="font-size: 24px; font-weight: bold;" id="infoValidQuestions">0</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                            <div style="color: #8a8aff; font-size: 12px;">基础信息题数</div>
+                            <div style="font-size: 24px; font-weight: bold;" id="infoBasicQuestions">0</div>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                            <div style="color: #8a8aff; font-size: 12px;">起始编号</div>
+                            <div style="font-size: 24px; font-weight: bold;" id="infoStartNumber">3</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="color: #8a8aff; margin-bottom: 10px;">正确率计算说明</h4>
+                        <p>有效题目数 = 总题目数 - 基础信息填写题数</p>
+                        <p>需要正确的题目数 = ceil(有效题目数 × 正确率%)</p>
+                        <p>实际正确率 ≥ 设定正确率 (去一法保证)</p>
+                    </div>
+                    
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px;">
+                        <h4 style="color: #8a8aff; margin-bottom: 10px;">示例计算</h4>
+                        <p id="infoCalculationExample">示例：总题目42题，基础信息2题，有效题目40题</p>
+                        <p id="infoAccuracyExample">设定90%正确率时，需要正确 ceil(40 × 90%) = 36 题</p>
+                        <p>实际正确率 = 36/40 = 90% (正好满足)</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-open" id="closeInfoBtn" style="flex: none; padding: 12px 25px;">
+                    关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 速度配置（与answer-script.js保持一致）
+        const SPEED_OPTIONS = [
+            { name: '刘子轩速度', value: 'lightning', delay: 100, desc: '5秒完成所有题目' },
+            { name: '极速', value: 'turbo', delay: 200, desc: '10秒完成所有题目' },
+            { name: '快速', value: 'fast', delay: 300, desc: '15秒完成所有题目' },
+            { name: '标准', value: 'normal', delay: 500, desc: '25秒完成所有题目' },
+            { name: '适中', value: 'medium', delay: 800, desc: '40秒完成所有题目' },
+            { name: '自然', value: 'natural', delay: 1200, desc: '1分钟完成所有题目' },
+            { name: '慢速', value: 'slow', delay: 1800, desc: '1分30秒完成所有题目' },
+            { name: '极慢', value: 'very-slow', delay: 2500, desc: '2分钟完成所有题目' },
+            { name: '随机', value: 'random', delay: 'random', desc: '随机速度模拟真人' }
+        ];
+        
+        // 默认内置题库（原V5.0版题库）
+        const DEFAULT_QUESTION_BANK = {
+            name: "2026理化生实验操作模拟考试-化学",
+            description: "汤逊湖初中模拟 | 基础信息填写题：2题",
+            basicInfoCount: 2,
+            startQuestionNum: 3,
+            answers: {
+                "1": ["朱一龙"],
+                "2": ["901"],
+                "3": ["锐器", "D 锐器"],
+                "4": ["蒸发皿", "D 蒸发皿"],
+                "5": ["完全注满玻璃管", "B 完全注满玻璃管"],
+                "6": ["有气泡产生", "C 有气泡产生"],
+                "7": ["与电源负极相连的玻璃管内产生汽泡的速率更快"],
+                "8": ["c中液面最高", "C c中液面最高"],
+                "9": ["烧杯内壁有水雾", "A 烧杯内壁有水雾"],
+                "10": ["1:2", "B 1:2"],
+                "11": ["木条燃烧得更旺", "D 木条燃烧得更旺"],
+                "12": ["电解器中加入的是蒸馏水", "A 电解器中加入的是蒸馏水"],
+                "13": ["集气瓶", "D 集气瓶"],
+                "14": ["镊子", "C 镊子"],
+                "15": ["导管口有气泡冒出", "A 导管口有气泡冒出"],
+                "16": ["石灰石和稀盐酸", "C 石灰石和稀盐酸"],
+                "17": ["将燃着的木条放在集气瓶口", "B 将燃着的木条放在集气瓶口"],
+                "18": ["二氧化碳能参与光合作用", "D 二氧化碳能参与光合作用"],
+                "19": ["二氧化碳能溶于水", "B 二氧化碳能溶于水"],
+                "20": ["①③", "A ①③"],
+                "21": ["图III中纸花变红", "C 图III中纸花变红"],
+                "22": ["二氧化碳能使澄清石灰水变浑浊", "C 二氧化碳能使澄清石灰水变浑浊"],
+                "23": ["C"],
+                "24": ["延展性", "C 延展性"],
+                "25": ["导电性", "B 导电性"],
+                "26": ["硬铝的硬度更大", "D 硬铝的硬度更大"],
+                "27": ["氢气", "C 氢气"],
+                "28": ["铁", "A 铁"],
+                "29": ["铜与氧气反应生成氧化铜", "B 铜与氧气反应生成氧化铜"],
+                "30": ["该实验说明金属活动性：银 ＞ 铜", "D 该实验说明金属活动性：银 ＞ 铜"],
+                "31": ["铜 ＞ 银", "A 铜 ＞ 银"],
+                "32": ["实验中溶液由蓝色变成浅绿色", "A 实验中溶液由蓝色变成浅绿色"],
+                "33": ["烧杯", "B 烧杯"],
+                "34": ["托盘天平", "C 托盘天平"],
+                "35": ["搅拌，加快粗盐溶解", "B 搅拌，加快粗盐溶解"],
+                "36": ["平视凹液面的最低处", "C 平视凹液面的最低处"],
+                "37": ["引流", "C 引流"],
+                "38": ["量筒", "B 量筒"],
+                "39": ["实验中滤纸发生破损", "D 实验中滤纸发生破损"],
+                "40": ["当蒸发皿中出现较多固体时停止加热", "B 当蒸发皿中出现较多固体时停止加热"],
+                "41": ["食盐和细沙", "A 食盐和细沙"],
+                "42": ["提纯后所得精盐未完全干燥", "D 提纯后所得精盐未完全干燥"]
+            }
+        };
+        
+        // 题库数据存储结构
+        let questionBanks = {};
+        let selectedSpeed = null;
+        let selectedBank = DEFAULT_QUESTION_BANK.name;
+        let wjxWindowId = null;
+        let accuracy = 100; // 正确率百分比
+        let isEditingBank = false;
+        let editingBankName = "";
+        let maxLines = 100; // 初始最大行数
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSpeedOptions();
+            setupEventListeners();
+            loadBanksFromStorage();
+            updateBankSelect();
+            updateBankPreview();
+            log('程序初始化完成 V7.0.1', 'success');
+        });
+        
+        // 渲染速度选项
+        function renderSpeedOptions() {
+            const container = document.getElementById('speedOptions');
+            container.innerHTML = '';
+            
+            SPEED_OPTIONS.forEach(option => {
+                const div = document.createElement('div');
+                div.className = 'speed-option';
+                div.innerHTML = `
+                    <div class="speed-name">${option.name}</div>
+                    <div class="speed-desc">${option.desc}</div>
+                `;
+                
+                div.addEventListener('click', () => {
+                    // 移除其他选中
+                    document.querySelectorAll('.speed-option').forEach(el => {
+                        el.classList.remove('selected');
+                    });
+                    
+                    // 选中当前
+                    div.classList.add('selected');
+                    selectedSpeed = option;
+                    
+                    log(`已选择速度: ${option.name}`, 'success');
+                });
+                
+                container.appendChild(div);
+            });
+            
+            // 默认选中标准速度
+            setTimeout(() => {
+                container.children[3].click();
+            }, 100);
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 正确率滑块
+            const accuracySlider = document.getElementById('accuracySlider');
+            const accuracyValue = document.getElementById('accuracyValue');
+            
+            accuracySlider.addEventListener('input', () => {
+                accuracy = parseInt(accuracySlider.value);
+                accuracyValue.textContent = `${accuracy}%`;
+                updateAccuracyExamples();
+            });
+            
+            // 问卷链接输入
+            const urlSuffixInput = document.getElementById('urlSuffix');
+            urlSuffixInput.addEventListener('input', () => {
+                // 验证输入格式
+                const value = urlSuffixInput.value.trim();
+                if (value && !value.match(/^[a-zA-Z0-9_\-\.]+$/)) {
+                    log('警告: 链接后缀只能包含字母、数字、下划线、连字符和点号', 'warning');
+                }
+            });
+            
+            // 题库选择
+            const bankSelect = document.getElementById('bankSelect');
+            bankSelect.addEventListener('change', () => {
+                selectedBank = bankSelect.value;
+                updateBankPreview();
+                log(`已选择题库: ${selectedBank}`, 'success');
+            });
+            
+            // 添加题库按钮
+            document.getElementById('addBankBtn').addEventListener('click', () => {
+                isEditingBank = false;
+                editingBankName = "";
+                document.getElementById('modalTitle').textContent = '新建题库';
+                document.getElementById('bankNameInput').value = '新题库';
+                document.getElementById('bankDescription').value = '';
+                document.getElementById('basicInfoCount').value = '2';
+                document.getElementById('startQuestionNum').value = '3';
+                document.getElementById('bankContentTextarea').value = '';
+                updateLineCount();
+                document.getElementById('bankEditorModal').style.display = 'flex';
+            });
+            
+            // 编辑题库按钮
+            document.getElementById('editBankBtn').addEventListener('click', () => {
+                if (!questionBanks[selectedBank]) {
+                    log('错误: 未找到当前题库数据', 'error');
+                    return;
+                }
+                
+                isEditingBank = true;
+                editingBankName = selectedBank;
+                const bank = questionBanks[selectedBank];
+                
+                document.getElementById('modalTitle').textContent = '编辑题库';
+                document.getElementById('bankNameInput').value = bank.name || selectedBank;
+                document.getElementById('bankDescription').value = bank.description || '';
+                document.getElementById('basicInfoCount').value = bank.basicInfoCount || 2;
+                document.getElementById('startQuestionNum').value = bank.startQuestionNum || 3;
+                
+                // 将题库答案转换为文本格式
+                let text = '';
+                const answers = bank.answers || {};
+                
+                // 获取题目编号并排序
+                const questionNumbers = Object.keys(answers)
+                    .filter(key => key.match(/^\d+$/))
+                    .map(Number)
+                    .sort((a, b) => a - b);
+                
+                // 从起始题目编号开始输出
+                const startNum = bank.startQuestionNum || 3;
+                for (let i = startNum; i <= Math.max(...questionNumbers); i++) {
+                    if (answers[i] && answers[i].length > 0) {
+                        text += answers[i][0] + '\n';
+                    }
+                }
+                
+                document.getElementById('bankContentTextarea').value = text.trim();
+                updateLineCount();
+                document.getElementById('bankEditorModal').style.display = 'flex';
+            });
+            
+            // 删除题库按钮
+            document.getElementById('deleteBankBtn').addEventListener('click', () => {
+                if (selectedBank === DEFAULT_QUESTION_BANK.name) {
+                    log('默认题库不能删除', 'error');
+                    return;
+                }
+                
+                if (Object.keys(questionBanks).length <= 1) {
+                    log('不能删除最后一个自定义题库', 'error');
+                    return;
+                }
+                
+                if (confirm(`确定要删除题库 "${selectedBank}" 吗？此操作不可恢复。`)) {
+                    delete questionBanks[selectedBank];
+                    saveBanksToStorage();
+                    updateBankSelect();
+                    
+                    // 选择另一个题库
+                    selectedBank = Object.keys(questionBanks)[0];
+                    bankSelect.value = selectedBank;
+                    updateBankPreview();
+                    
+                    log(`已删除题库: ${selectedBank}`, 'success');
+                }
+            });
+            
+            // 题库信息按钮
+            document.getElementById('bankInfoBtn').addEventListener('click', () => {
+                if (!questionBanks[selectedBank]) {
+                    log('错误: 未找到当前题库数据', 'error');
+                    return;
+                }
+                
+                const bank = questionBanks[selectedBank];
+                const answers = bank.answers || {};
+                const totalQuestions = Object.keys(answers).length;
+                const basicInfoCount = bank.basicInfoCount || 2;
+                const validQuestions = Math.max(0, totalQuestions - basicInfoCount);
+                
+                // 更新信息内容
+                document.getElementById('infoModalTitle').textContent = '题库信息';
+                document.getElementById('infoBankName').textContent = bank.name || selectedBank;
+                document.getElementById('infoBankDescription').textContent = bank.description || '暂无描述';
+                document.getElementById('infoTotalQuestions').textContent = totalQuestions;
+                document.getElementById('infoBasicQuestions').textContent = basicInfoCount;
+                document.getElementById('infoValidQuestions').textContent = validQuestions;
+                document.getElementById('infoStartNumber').textContent = bank.startQuestionNum || 3;
+                
+                // 更新计算示例
+                document.getElementById('infoCalculationExample').textContent = 
+                    `示例：总题目${totalQuestions}题，基础信息${basicInfoCount}题，有效题目${validQuestions}题`;
+                
+                if (validQuestions > 0) {
+                    const neededCorrect = Math.ceil(validQuestions * accuracy / 100);
+                    document.getElementById('infoAccuracyExample').textContent = 
+                        `设定${accuracy}%正确率时，需要正确 ceil(${validQuestions} × ${accuracy}%) = ${neededCorrect} 题`;
+                } else {
+                    document.getElementById('infoAccuracyExample').textContent = 
+                        '有效题目数为0，无法计算正确率';
+                }
+                
+                document.getElementById('bankInfoModal').style.display = 'flex';
+            });
+            
+            // 题库编辑器相关
+            document.getElementById('closeModalBtn').addEventListener('click', closeBankEditor);
+            document.getElementById('cancelEditBtn').addEventListener('click', closeBankEditor);
+            document.getElementById('saveBankBtn').addEventListener('click', saveBank);
+            
+            // 题库信息模态框相关
+            document.getElementById('closeInfoModalBtn').addEventListener('click', closeBankInfo);
+            document.getElementById('closeInfoBtn').addEventListener('click', closeBankInfo);
+            
+            // 题库内容文本区域
+            const textarea = document.getElementById('bankContentTextarea');
+            textarea.addEventListener('input', function() {
+                updateLineCount();
+                autoExpandTextarea(this);
+            });
+            
+            // 基础信息题数输入验证
+            document.getElementById('basicInfoCount').addEventListener('input', function() {
+                const value = parseInt(this.value) || 0;
+                if (value < 0) this.value = 0;
+                if (value > 20) this.value = 20;
+            });
+            
+            // 起始题目编号输入验证
+            document.getElementById('startQuestionNum').addEventListener('input', function() {
+                const value = parseInt(this.value) || 1;
+                if (value < 1) this.value = 1;
+                if (value > 1000) this.value = 1000;
+            });
+            
+            // 打开问卷页面按钮
+            document.getElementById('btnOpen').addEventListener('click', openWjxPage);
+            
+            // 开始答题按钮
+            document.getElementById('btnStart').addEventListener('click', startAutoAnswer);
+            
+            // 监听来自Electron的事件
+            if (window.electronAPI) {
+                window.electronAPI.onWjxLoaded((event, success, error) => {
+                    if (success) {
+                        log('问卷页面加载完成，脚本注入成功', 'success');
+                        document.getElementById('btnStart').disabled = false;
+                        
+                        // 恢复按钮状态
+                        const btn = document.getElementById('btnStart');
+                        const loading = btn.querySelector('.loading');
+                        btn.disabled = false;
+                        loading.style.display = 'none';
+                        btn.innerHTML = '开始自动答题';
+                        
+                    } else {
+                        log(`脚本注入失败: ${error}`, 'error');
+                    }
+                });
+                
+                window.electronAPI.onWjxClosed(() => {
+                    log('问卷窗口已关闭', 'warning');
+                    wjxWindowId = null;
+                    document.getElementById('btnStart').disabled = true;
+                });
+                
+                window.electronAPI.onWjxError((error) => {
+                    log(`页面加载错误: ${error}`, 'error');
+                });
+            }
+        }
+        
+        // 加载题库数据
+        function loadBanksFromStorage() {
+            try {
+                // 尝试从localStorage加载题库
+                const savedBanks = localStorage.getItem('questionBanksV7');
+                if (savedBanks) {
+                    questionBanks = JSON.parse(savedBanks);
+                    log('从本地存储加载题库成功', 'success');
+                } else {
+                    // 初始化默认题库
+                    questionBanks[DEFAULT_QUESTION_BANK.name] = DEFAULT_QUESTION_BANK;
+                    log('使用默认题库', 'info');
+                }
+            } catch (e) {
+                log('加载题库失败，使用默认题库: ' + e.message, 'error');
+                questionBanks[DEFAULT_QUESTION_BANK.name] = DEFAULT_QUESTION_BANK;
+            }
+        }
+        
+        // 保存题库数据
+        function saveBanksToStorage() {
+            try {
+                localStorage.setItem('questionBanksV7', JSON.stringify(questionBanks));
+                return true;
+            } catch (e) {
+                log('保存题库到本地存储失败: ' + e.message, 'error');
+                return false;
+            }
+        }
+        
+        // 更新题库选择下拉框
+        function updateBankSelect() {
+            const bankSelect = document.getElementById('bankSelect');
+            bankSelect.innerHTML = '';
+            
+            Object.keys(questionBanks).forEach(bankName => {
+                const option = document.createElement('option');
+                option.value = bankName;
+                option.textContent = bankName;
+                if (bankName === DEFAULT_QUESTION_BANK.name) {
+                    option.textContent += ' (默认)';
+                }
+                bankSelect.appendChild(option);
+            });
+            
+            bankSelect.value = selectedBank;
+        }
+        
+        // 更新题库预览
+        function updateBankPreview() {
+            const bankPreview = document.getElementById('bankPreview');
+            const bank = questionBanks[selectedBank];
+            
+            if (!bank) {
+                bankPreview.innerHTML = `
+                    <div class="bank-header">
+                        <div class="bank-stats">题库数据错误</div>
+                    </div>
+                    <div class="bank-items">
+                        <div class="bank-item">无法加载题库信息</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const answers = bank.answers || {};
+            const totalQuestions = Object.keys(answers).length;
+            const basicInfoCount = bank.basicInfoCount || 2;
+            const validQuestions = Math.max(0, totalQuestions - basicInfoCount);
+            const startQuestionNum = bank.startQuestionNum || 3;
+            
+            // 更新预览标题
+            const previewTitle = bankPreview.querySelector('.bank-header');
+            if (previewTitle) {
+                previewTitle.innerHTML = `
+                    <div class="bank-stats">
+                        题目: ${totalQuestions}题 | 有效: ${validQuestions}题 | 基础信息: ${basicInfoCount}题
+                    </div>
+                `;
+            }
+            
+            // 获取题目预览（前10条）
+            const bankItems = bankPreview.querySelector('.bank-items');
+            if (bankItems) {
+                let previewHTML = '';
+                const questionNumbers = Object.keys(answers)
+                    .filter(key => key.match(/^\d+$/))
+                    .map(Number)
+                    .sort((a, b) => a - b);
+                
+                // 显示基础信息题
+                for (let i = 1; i <= Math.min(basicInfoCount, 2); i++) {
+                    if (answers[i]) {
+                        previewHTML += `<div class="bank-item">第${i}题 (基础信息): ${answers[i][0] || ''}</div>`;
+                    }
+                }
+                
+                // 显示前8条有效题目
+                let count = 0;
+                for (let i = startQuestionNum; i <= Math.max(...questionNumbers) && count < 8; i++) {
+                    if (answers[i] && answers[i].length > 0) {
+                        previewHTML += `<div class="bank-item">第${i}题: ${answers[i][0] || ''}</div>`;
+                        count++;
+                    }
+                }
+                
+                // 如果有更多题目，显示提示
+                if (validQuestions > 8) {
+                    previewHTML += `<div class="bank-item" style="border-left-color: #FF9800; font-style: italic;">
+                        还有 ${validQuestions - 8} 题未显示...
+                    </div>`;
+                }
+                
+                // 如果没有题目
+                if (validQuestions === 0) {
+                    previewHTML = `<div class="bank-item" style="border-left-color: #f44336;">
+                        题库中没有有效题目，请编辑题库添加答案
+                    </div>`;
+                }
+                
+                bankItems.innerHTML = previewHTML;
+            }
+            
+            // 更新正确率计算示例
+            updateAccuracyExamples();
+        }
+        
+        // 更新正确率计算示例
+        function updateAccuracyExamples() {
+            const bank = questionBanks[selectedBank];
+            if (!bank) return;
+            
+            const answers = bank.answers || {};
+            const totalQuestions = Object.keys(answers).length;
+            const basicInfoCount = bank.basicInfoCount || 2;
+            const validQuestions = Math.max(0, totalQuestions - basicInfoCount);
+            
+            if (validQuestions > 0) {
+                const neededCorrect = Math.ceil(validQuestions * accuracy / 100);
+                const actualAccuracy = (neededCorrect / validQuestions * 100).toFixed(1);
+                
+                const exampleText = `设定${accuracy}%正确率，需要正确 ${neededCorrect}/${validQuestions} 题，实际正确率 ${actualAccuracy}%`;
+                
+                // 更新正确率信息显示
+                const accuracyInfo = document.querySelector('.accuracy-info');
+                if (accuracyInfo) {
+                    accuracyInfo.innerHTML = `
+                        <strong>去一法计算规则：</strong><br>
+                        有效题目数 = 总题目数 - 基础信息填写题数 = ${validQuestions}题<br>
+                        需要正确的题数 = ceil(${validQuestions} × ${accuracy}%) = ${neededCorrect}题<br>
+                        实际正确率 = ${neededCorrect}/${validQuestions} = ${actualAccuracy}% ≥ ${accuracy}%
+                    `;
+                }
+            }
+        }
+        
+        // 自动扩展文本框
+        function autoExpandTextarea(textarea) {
+            const lines = textarea.value.split('\n').length;
+            
+            // 每100行扩展一次，最多1000行
+            const newMaxLines = Math.min(1000, Math.max(100, Math.ceil(lines / 100) * 100));
+            
+            if (newMaxLines > maxLines) {
+                maxLines = newMaxLines;
+                textarea.rows = Math.min(30, Math.max(15, Math.ceil(lines * 0.8)));
+                updateLineCount();
+                log(`题库容量已扩展至 ${maxLines} 行`, 'info');
+            }
+        }
+        
+        // 更新行数计数
+        function updateLineCount() {
+            const textarea = document.getElementById('bankContentTextarea');
+            const lines = textarea.value.split('\n').filter(line => line.trim() !== '');
+            const lineCount = lines.length;
+            
+            // 更新显示
+            document.getElementById('currentLineCount').textContent = `${lineCount} 行`;
+            document.getElementById('usedLines').textContent = lineCount;
+            document.getElementById('remainingLines').textContent = maxLines - lineCount;
+            document.getElementById('maxLinesInfo').textContent = `最大支持: ${maxLines} 行`;
+            
+            // 颜色提示
+            const remaining = maxLines - lineCount;
+            const remainingElement = document.getElementById('remainingLines');
+            if (remaining <= 10) {
+                remainingElement.style.color = '#f44336';
+            } else if (remaining <= 50) {
+                remainingElement.style.color = '#FF9800';
+            } else {
+                remainingElement.style.color = '#4CAF50';
+            }
+            
+            // 如果接近最大行数，提示扩展
+            if (lineCount >= maxLines - 5 && maxLines < 1000) {
+                log(`提示：题库即将满 ${maxLines} 行，保存时会自动扩展`, 'warning');
+            }
+        }
+        
+        // 关闭题库编辑器
+        function closeBankEditor() {
+            document.getElementById('bankEditorModal').style.display = 'none';
+        }
+        
+        // 关闭题库信息
+        function closeBankInfo() {
+            document.getElementById('bankInfoModal').style.display = 'none';
+        }
+        
+        // 保存题库
+        function saveBank() {
+            const bankName = document.getElementById('bankNameInput').value.trim();
+            const description = document.getElementById('bankDescription').value.trim();
+            const basicInfoCount = parseInt(document.getElementById('basicInfoCount').value) || 2;
+            const startQuestionNum = parseInt(document.getElementById('startQuestionNum').value) || 3;
+            const content = document.getElementById('bankContentTextarea').value.trim();
+            
+            if (!bankName) {
+                log('错误: 题库名称不能为空', 'error');
+                return;
+            }
+            
+            if (bankName === DEFAULT_QUESTION_BANK.name && !isEditingBank) {
+                log('错误: 不能使用默认题库名称', 'error');
+                return;
+            }
+            
+            // 解析内容为答案格式
+            const lines = content.split('\n').filter(line => line.trim() !== '');
+            const answers = {};
+            
+            // 添加基础信息（如果有）
+            if (basicInfoCount > 0) {
+                // 这里可以根据需要添加基础信息的答案
+                // 目前留空，由用户在实际使用时填写
+            }
+            
+            // 从起始编号开始添加答案
+            let currentQuestionNum = startQuestionNum;
+            
+            lines.forEach((line, index) => {
+                if (currentQuestionNum > 1000) {
+                    log(`警告: 题目数量超过1000条限制，第${index + 1}行之后的内容将被忽略`, 'warning');
+                    return;
+                }
+                
+                const answerText = line.trim();
+                if (answerText) {
+                    // 生成答案数组，包括原始答案和可能的带字母选项
+                    const answerArray = [answerText];
+                    
+                    // 添加带字母的选项格式（A、B、C、D）
+                    if (answerText.length < 50) { // 避免太长的答案
+                        // 添加常见字母选项
+                        const letters = ['A', 'B', 'C', 'D'];
+                        const letter = letters[Math.min(index, 3)];
+                        answerArray.push(`${letter} ${answerText}`);
+                    }
+                    
+                    answers[currentQuestionNum.toString()] = answerArray;
+                    currentQuestionNum++;
+                }
+            });
+            
+            // 创建题库对象
+            const newBank = {
+                name: bankName,
+                description: description || '',
+                basicInfoCount: basicInfoCount,
+                startQuestionNum: startQuestionNum,
+                answers: answers
+            };
+            
+            // 保存题库
+            questionBanks[bankName] = newBank;
+            
+            // 如果正在编辑的是旧题库名，且题库名已更改，删除旧题库
+            if (isEditingBank && editingBankName !== bankName && questionBanks[editingBankName]) {
+                delete questionBanks[editingBankName];
+            }
+            
+            // 保存到本地存储
+            const success = saveBanksToStorage();
+            
+            if (success) {
+                // 更新UI
+                selectedBank = bankName;
+                updateBankSelect();
+                updateBankPreview();
+                
+                // 关闭编辑器
+                closeBankEditor();
+                
+                const totalQuestions = Object.keys(answers).length;
+                log(`题库 "${bankName}" 保存成功，包含 ${totalQuestions} 道题目`, 'success');
+            } else {
+                log('保存题库失败，请检查浏览器存储权限', 'error');
+            }
+        }
+        
+        // 打开问卷页面
+        async function openWjxPage() {
+            // 验证配置
+            if (!selectedSpeed) {
+                log('请先选择答题速度', 'warning');
+                return;
+            }
+            
+            const urlSuffix = document.getElementById('urlSuffix').value.trim();
+            if (!urlSuffix) {
+                log('请填写问卷链接后缀', 'warning');
+                return;
+            }
+            
+            if (!selectedBank || !questionBanks[selectedBank]) {
+                log('请选择有效的题库', 'warning');
+                return;
+            }
+            
+            const bank = questionBanks[selectedBank];
+            const answers = bank.answers || {};
+            const totalQuestions = Object.keys(answers).length;
+            const basicInfoCount = bank.basicInfoCount || 2;
+            const validQuestions = Math.max(0, totalQuestions - basicInfoCount);
+            
+            if (validQuestions === 0) {
+                log('警告: 题库中没有有效题目，请编辑题库添加答案', 'warning');
+                return;
+            }
+            
+            // 计算需要正确的题目数
+            const neededCorrect = Math.ceil(validQuestions * accuracy / 100);
+            const actualAccuracy = (neededCorrect / validQuestions * 100).toFixed(1);
+            
+            log(`正在打开问卷页面，速度: ${selectedSpeed.name}, 正确率: ${accuracy}%, 题库: ${selectedBank}...`, 'info');
+            log(`题库统计: 总${totalQuestions}题，基础信息${basicInfoCount}题，有效${validQuestions}题，需要正确${neededCorrect}题，实际正确率${actualAccuracy}%`, 'info');
+            
+            try {
+                const config = {
+                    speedConfig: selectedSpeed,
+                    accuracy: accuracy,
+                    urlSuffix: urlSuffix,
+                    selectedBank: selectedBank,
+                    answers: answers,
+                    basicInfoCount: basicInfoCount
+                };
+                
+                const result = await window.electronAPI.openWjxWindow(config);
+                if (result.success) {
+                    wjxWindowId = result.windowId;
+                    log('问卷页面已打开，请等待加载...', 'success');
+                    
+                    // 显示加载状态
+                    const btn = document.getElementById('btnStart');
+                    const loading = btn.querySelector('.loading');
+                    btn.disabled = true;
+                    loading.style.display = 'inline-block';
+                    btn.innerHTML = '<span class="loading"></span> 等待页面加载...';
+                    
+                } else {
+                    log('打开问卷页面失败', 'error');
+                }
+            } catch (error) {
+                log(`打开页面出错: ${error.message}`, 'error');
+            }
+        }
+        
+        // 开始自动答题
+        async function startAutoAnswer() {
+            log('正在开始自动答题...', 'info');
+            
+            try {
+                // 注入答题脚本
+                const result = await window.electronAPI.injectScript('if (window.startAutoAnswer) window.startAutoAnswer();');
+                if (result.success) {
+                    log('已触发自动答题，请查看问卷页面', 'success');
+                } else {
+                    log(`触发答题失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                log(`启动失败: ${error.message}`, 'error');
+            }
+        }
+        
+        // 日志函数
+        function log(message, type = 'info') {
+            const statusContent = document.getElementById('statusContent');
+            const logDiv = document.createElement('div');
+            logDiv.className = `log ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent = `[${timestamp}] ${message}`;
+            
+            statusContent.appendChild(logDiv);
+            statusContent.scrollTop = statusContent.scrollHeight;
+        }
+        
+        // 清空日志
+        window.clearLogs = function() {
+            document.getElementById('statusContent').innerHTML = '';
+            log('日志已清空', 'info');
+        };
+    </script>
+</body>
+</html>

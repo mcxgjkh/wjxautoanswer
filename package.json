@@ -1,0 +1,79 @@
+{
+  "name": "wjx-auto-answer",
+  "version": "7.0.1",
+  "description": "问卷星自动答题器 V7.0.1 - Design By MCXGJKH (AGPL-3.0 Licensed)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win --x64",
+    "build:win32": "electron-builder --win --xia32",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux",
+    "pack": "electron-builder --dir"
+  },
+  "keywords": [
+    "问卷星",
+    "自动答题",
+    "题库管理",
+    "正确率控制",
+    "AGPL-3.0"
+  ],
+  "author": "MCXGJKH",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "electron": "^25.0.0",
+    "electron-builder": "^24.6.0"
+  },
+  "build": {
+    "appId": "com.mcxgjk.wjxautoanswer",
+    "productName": "问卷星自动答题器 V7.0.1 (AGPL-3.0)",
+    "copyright": "Copyright © 2026 MCXGJKH - Licensed under AGPL-3.0",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules",
+      "!dist",
+      "!.git",
+      "!*.md",
+      "!LICENSE",
+      "!*.license"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico",
+      "requestedExecutionLevel": "asInvoker",
+      "legalTrademarks": "AGPL-3.0 Licensed"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "问卷星答题器 V7.0.1 (AGPL-3.0)",
+      "license": "LICENSE"
+    },
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "icon.icns",
+      "entitlements": "./build/entitlements.mac.plist",
+      "entitlementsInherit": "./build/entitlements.mac.plist",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Utility",
+      "synopsis": "问卷星自动答题器 (AGPL-3.0)",
+      "description": "基于Electron的问卷星自动答题工具，采用AGPL-3.0许可证"
+    },
+    "publish": null,
+    "extraResources": [
+      {
+        "from": "LICENSE",
+        "to": "LICENSE"
+      }
+    ]
+  }
+}
