@@ -47,16 +47,14 @@ Design by MCXGJKH
 # 1. 安装Node.js (>=16)
 # 2. 克隆或下载本项目
 # 3. 安装依赖
-npm install
+npm install electron --save-dev
+npm install electron-builder
 
 # 4. 运行开发版本
 npm start
 
-# 5. 打包成安装包
-npm run build:win  # Windows 64位
-npm run build:win32  # Windows 32位
-npm run build:mac  # macOS
-npm run build:linux # Linux
+# 5. 打包
+build.bat
 ```
 
 # 问卷星自动答题器 V7.1.2 便携版使用说明
@@ -92,14 +90,14 @@ userdata/ # 数据目录（首次运行自动创建）
 # 1. 安装Node.js (>=16)
 # 2. 克隆或下载本项目
 # 3. 安装依赖
-npm install
+npm install electron --save-dev
+npm install electron-builder
 
 # 4. 运行开发版本
 npm start
 
-# 5. 打包成安装包
-npm run build:portable # Windows 64位
-npm run build:portable32 # Windows 32位
+# 5. 打包
+build.bat
 ```
 
 ## 使用说明

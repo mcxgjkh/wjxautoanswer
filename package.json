@@ -16,11 +16,15 @@
     "build:all": "npm run clean && npm run build:portable && npm run build:portable32 && npm run build:win && npm run build:win32",
     "clean": "rm -rf build"
   },
-  "keywords": ["问卷星", "自动答题", "题库管理"],
+  "keywords": [
+    "问卷星",
+    "自动答题",
+    "题库管理"
+  ],
   "author": "MCXGJKH",
   "license": "AGPL-3.0",
   "devDependencies": {
-    "electron": "^25.0.0",
+    "electron": "^25.9.8",
     "electron-builder": "^24.6.0"
   },
   "build": {
@@ -39,7 +43,6 @@
       "!*.md",
       "!*.log"
     ],
-    
     "extraResources": [
       {
         "from": "icon.ico",
@@ -50,26 +53,29 @@
         "to": "LICENSE"
       }
     ],
-    
     "win": {
       "icon": "icon.ico",
       "target": [
         {
           "target": "portable",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         },
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         }
       ]
     },
-    
     "portable": {
       "artifactName": "${productName} ${arch} 便携版.${ext}",
       "requestExecutionLevel": "user"
     },
-    
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -78,7 +84,6 @@
       "shortcutName": "问卷星答题器 ${version}",
       "artifactName": "${productName} ${version} ${arch} 安装版.${ext}"
     },
-    
     "asar": true,
     "compression": "maximum",
     "removePackageScripts": true
