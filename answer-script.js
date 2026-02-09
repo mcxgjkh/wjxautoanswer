@@ -1,5 +1,6 @@
 // ============================
-// V7.2.3 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
+// V7.4.1 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
+// 新增图片URL匹配功能
 // ============================
 
 (function() {
@@ -10,9 +11,9 @@
     const accuracy = window.ElectronAccuracy || 1.0; // 正确率，默认100%
     const electronAnswers = window.ElectronAnswers || {};
     const electronBasicInfoCount = window.ElectronBasicInfoCount || 2; // 基础信息填写题数，默认2题
-    console.log('V7.2.3 - 来自Electron的配置:', electronConfig);
-    console.log('V7.2.3 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
-    console.log('V7.2.3 - 基础信息填写题数:', electronBasicInfoCount);
+    console.log('V7.4.1 - 来自Electron的配置:', electronConfig);
+    console.log('V7.4.1 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
+    console.log('V7.4.1 - 基础信息填写题数:', electronBasicInfoCount);
     
     // ==================== 速度配置 ====================
     const SPEED_OPTIONS = [
@@ -37,6 +38,154 @@
     let customDelay = electronConfig.delay || 500;
     let bot = null;
     let isRunning = false;
+    
+    // ==================== 新增图片URL匹配功能 ====================
+    
+    // 提取图片URL函数
+    function extractImageUrlsFromText(text) {
+        if (!text) return [];
+        
+        const urls = [];
+        // 匹配img标签中的src
+        const imgRegex = /<img[^>]+src="([^"]+)"[^>]*>/gi;
+        let match;
+        
+        while ((match = imgRegex.exec(text)) !== null) {
+            let url = match[1];
+            // 处理协议相对URL
+            if (url.startsWith('//')) {
+                url = 'https:' + url;
+            }
+            urls.push(url);
+        }
+        
+        return urls;
+    }
+    
+    // 从题目元素中提取所有图片URL
+    function extractImageUrlsFromQuestion(questionElement) {
+        const $question = $(questionElement);
+        const urls = [];
+        
+        // 从题目文本中提取
+        const questionText = $question.html() || $question.text();
+        const textUrls = extractImageUrlsFromText(questionText);
+        urls.push(...textUrls);
+        
+        // 从题目中的img标签提取
+        $question.find('img').each(function() {
+            let src = $(this).attr('src');
+            if (src) {
+                if (src.startsWith('//')) {
+                    src = 'https:' + src;
+                }
+                urls.push(src);
+            }
+        });
+        
+        // 去重
+        return [...new Set(urls.filter(url => url && url.trim()))];
+    }
+    
+    // 规范化图片URL（移除查询参数，只保留基础URL）
+    function normalizeImageUrl(url) {
+        if (!url) return '';
+        
+        try {
+            // 确保有协议
+            let fullUrl = url;
+            if (fullUrl.startsWith('//')) {
+                fullUrl = 'https:' + fullUrl;
+            } else if (!fullUrl.includes('://')) {
+                fullUrl = 'https://' + fullUrl;
+            }
+            
+            // 创建URL对象
+            const urlObj = new URL(fullUrl);
+            
+            // 只保留协议、域名和路径
+            return urlObj.origin + urlObj.pathname;
+        } catch (e) {
+            // 如果URL解析失败，尝试简单处理
+            console.warn('URL解析失败:', url, e);
+            return url.split('?')[0]; // 移除查询参数
+        }
+    }
+    
+    // 检查题目是否包含图片
+    function hasImagesInQuestion(questionElement) {
+        const $question = $(questionElement);
+        return $question.find('img').length > 0 || /<img/i.test($question.html() || '');
+    }
+    
+    // 检查题库中的答案是否包含图片URL
+    function hasImageUrlsInAnswers(questionNum) {
+        const answers = ANSWERS[questionNum];
+        if (!answers || !Array.isArray(answers)) return false;
+        
+        // 检查答案中是否有看起来像URL的内容
+        return answers.some(answer => {
+            if (typeof answer !== 'string') return false;
+            const cleanAnswer = answer.trim();
+            return cleanAnswer.startsWith('http') || 
+                   cleanAnswer.startsWith('//') || 
+                   /\.(jpg|jpeg|png|gif|bmp|webp)(\?|$)/i.test(cleanAnswer);
+        });
+    }
+    
+    // 匹配图片URL
+    function matchImageUrl(questionElement, questionNum) {
+        if (!hasImagesInQuestion(questionElement) || !hasImageUrlsInAnswers(questionNum)) {
+            return null;
+        }
+        
+        // 提取题目中的图片URL
+        const questionImageUrls = extractImageUrlsFromQuestion(questionElement);
+        if (questionImageUrls.length === 0) {
+            return null;
+        }
+        
+        // 获取题库中的答案
+        const answerUrls = ANSWERS[questionNum];
+        if (!answerUrls || answerUrls.length === 0) {
+            return null;
+        }
+        
+        // 遍历所有答案，尝试匹配
+        for (const answerUrl of answerUrls) {
+            if (typeof answerUrl !== 'string') continue;
+            
+            const normalizedAnswerUrl = normalizeImageUrl(answerUrl.trim());
+            
+            for (const questionUrl of questionImageUrls) {
+                const normalizedQuestionUrl = normalizeImageUrl(questionUrl);
+                
+                // 完全匹配
+                if (normalizedAnswerUrl === normalizedQuestionUrl) {
+                    console.log(`图片URL完全匹配: ${normalizedAnswerUrl}`);
+                    return answerUrl;
+                }
+                
+                // 包含匹配（一个包含另一个）
+                if (normalizedAnswerUrl.includes(normalizedQuestionUrl) || 
+                    normalizedQuestionUrl.includes(normalizedAnswerUrl)) {
+                    console.log(`图片URL包含匹配: ${answerUrl} ↔ ${questionUrl}`);
+                    return answerUrl;
+                }
+                
+                // 文件名匹配
+                const answerFilename = normalizedAnswerUrl.split('/').pop();
+                const questionFilename = normalizedQuestionUrl.split('/').pop();
+                if (answerFilename && questionFilename && 
+                    answerFilename === questionFilename) {
+                    console.log(`图片文件名匹配: ${answerFilename}`);
+                    return answerUrl;
+                }
+            }
+        }
+        
+        return null;
+    }
     
     // 注入样式
     function injectStyles() {
@@ -175,7 +324,7 @@
         statusBar.className = 'electron-status-bar';
         statusBar.innerHTML = `
             <div class="left">
-                <div class="title">问卷星自动答题器 V7.2.3</div>
+                <div class="title">问卷星自动答题器 V7.4.1</div>
                 <div class="status" id="statusText">准备中...</div>
                 <div class="accuracy-info">正确率: <span class="accuracy-value">${(accuracy * 100).toFixed(0)}%</span></div>
                 <div class="basic-info-count">基础信息: ${electronBasicInfoCount}题</div>
@@ -237,7 +386,7 @@
         }
     }
     
-    // ==================== 答题机器人 V7.2.3 ====================
+    // ==================== 答题机器人 V7.4.1（增强版） ====================
     class AnswerBot {
         constructor(speedOption, accuracy, basicInfoCount) {
             this.speedOption = speedOption;
@@ -254,12 +403,12 @@
             this.allQuestions = []; // 所有题目
             this.answerableQuestions = []; // 可答题的题目（排除基础信息题）
             
-            console.log(`V7.2.3 - 初始化答题机器人`);
+            console.log(`V7.4.1 - 初始化答题机器人（支持图片URL匹配）`);
             console.log(`  速度模式: ${speedOption.name}`);
             console.log(`  目标正确率: ${(accuracy * 100).toFixed(0)}%`);
             console.log(`  基础信息题数: ${basicInfoCount}`);
             console.log(`  基础延迟: ${this.delay === null ? '随机' : this.delay + 'ms'}`);
-            console.log(`  Design By MCXGJKH - 采用去一法计算正确率`);
+            console.log(`  Design By MCXGJKH - 支持图片URL匹配功能`);
         }
         
         // 停止机器人
@@ -322,28 +471,83 @@
                 
                 const cleanKeyword = keyword.trim().toLowerCase();
                 
-                // 完全相等
+                // 方法1：完全相等
                 if (cleanText === cleanKeyword) {
                     return true;
                 }
                 
-                // 包含完整关键词
-                if (cleanText.includes(cleanKeyword) && cleanKeyword.length > 1) {
+                // 方法2：去除选项序号后匹配（新添加的逻辑）
+                // 移除开头的字母+分隔符（如"A "、"A."、"A、"）
+                const textWithoutPrefix = cleanText.replace(/^[a-d]\s*[\.、]?\s*/i, '').trim();
+                if (textWithoutPrefix === cleanKeyword) {
                     return true;
                 }
                 
-                // 匹配带字母前缀的选项（如"A 护目镜"）
-                const pattern = new RegExp(`^[a-d]\\s*${cleanKeyword}$`, 'i');
-                if (pattern.test(cleanText)) {
-                    return true;
+                // 方法3：如果选项文本中有关键词，且关键词长度足够长，进行全词匹配
+                // 使用单词边界确保是全词匹配
+                if (cleanKeyword.length > 1) {
+                    const wordBoundaryRegex = new RegExp(`\\b${cleanKeyword}\\b`, 'i');
+                    if (wordBoundaryRegex.test(cleanText)) {
+                        return true;
+                    }
                 }
             }
             
             return false;
         }
         
-        // 查找匹配选项
+        // 查找匹配选项（增强版：支持图片URL匹配）
         findMatchOption(questionElement, questionNum) {
+            console.log(`处理题目 ${questionNum}`);
+            
+            // 第一步：检查是否是图片题目并进行图片URL匹配
+            const matchedImageUrl = matchImageUrl(questionElement, questionNum);
+            if (matchedImageUrl) {
+                console.log(`  题目 ${questionNum}: 图片URL匹配成功 - ${matchedImageUrl}`);
+                
+                // 图片匹配成功后，需要找到对应的选项
+                // 通常图片题目会有一个与图片对应的选项
+                const $question = $(questionElement);
+                const options = $question.find('.ui-radio, .ui-checkbox, .hasImagelabel');
+                
+                for (let i = 0; i < options.length; i++) {
+                    const $option = $(options[i]);
+                    const optionText = $option.find('.label').text().trim();
+                    const optionHtml = $option.html();
+                    
+                    // 检查选项文本或HTML中是否包含匹配的图片URL
+                    if (optionText.includes(matchedImageUrl) || 
+                        (optionHtml && optionHtml.includes(matchedImageUrl))) {
+                        const input = $option.find('input[type="radio"], input[type="checkbox"]')[0];
+                        if (input) {
+                            console.log(`    找到匹配的选项: "${optionText}"`);
+                            return input;
+                        }
+                    }
+                    
+                    // 检查选项是否包含图片
+                    const optionImg = $option.find('img');
+                    if (optionImg.length > 0) {
+                        const imgSrc = optionImg.attr('src') || '';
+                        const normalizedImgSrc = normalizeImageUrl(imgSrc);
+                        const normalizedMatchedUrl = normalizeImageUrl(matchedImageUrl);
+                        
+                        if (normalizedImgSrc === normalizedMatchedUrl) {
+                            const input = $option.find('input[type="radio"], input[type="checkbox"]')[0];
+                            if (input) {
+                                console.log(`    找到匹配的图片选项`);
+                                return input;
+                            }
+                        }
+                    }
+                }
+                
+                // 如果没有找到对应的选项，但图片匹配成功，可以返回一个标志
+                console.log(`  图片URL匹配成功，但未找到对应的选项元素`);
+                return 'image_matched'; // 特殊标志，表示图片匹配成功
+            }
+            
+            // 第二步：原有的文本匹配逻辑
             const keywords = ANSWERS[questionNum];
             if (!keywords || keywords.length === 0) {
                 console.warn(`  题目 ${questionNum}: 无答案关键字`);
@@ -416,7 +620,14 @@
         
         // 确保选择生效
         async ensureSelection(inputElement) {
-            if (!inputElement) return false;
+            if (!inputElement || inputElement === 'image_matched') {
+                // 如果是图片匹配成功的特殊标志，直接返回true
+                if (inputElement === 'image_matched') {
+                    console.log('  图片URL匹配成功，无需选择选项');
+                    return true;
+                }
+                return false;
+            }
             
             const $input = $(inputElement);
             
@@ -566,7 +777,7 @@
             // 计算需要正确的题目数量（采用去一法，保证实际正确率 >= 设置正确率）
             const targetCorrectCount = Math.ceil(totalAnswerable * this.accuracy);
             
-            console.log(`V7.2.3 - 正确率计算:`);
+            console.log(`V7.4.1 - 正确率计算:`);
             console.log(`  有效题目数: ${totalAnswerable}题`);
             console.log(`  设定正确率: ${(this.accuracy * 100).toFixed(0)}%`);
             console.log(`  需要正确题数: ceil(${totalAnswerable} × ${this.accuracy}) = ${targetCorrectCount}题`);
@@ -593,7 +804,7 @@
                                        (this.correctCount === targetCorrectCount && this.accuracy >= 1);
                 
                 if (shouldBeCorrect) {
-                    // 选择正确答案
+                    // 选择正确答案（使用增强的findMatchOption，支持图片URL匹配）
                     const correctOption = this.findMatchOption(question.element, questionNum);
                     if (correctOption) {
                         const selected = await this.ensureSelection(correctOption);
@@ -637,7 +848,7 @@
             
             // 计算实际正确率
             const actualAccuracy = this.correctCount / totalAnswerable;
-            console.log(`V7.2.3 - 答题完成:`);
+            console.log(`V7.4.1 - 答题完成:`);
             console.log(`  总共答题: ${this.completedCount}题`);
             console.log(`  正确答题: ${this.correctCount}题`);
             console.log(`  错误答题: ${this.errorQuestions.length}题`);
@@ -681,7 +892,7 @@
             
             // 确认对话框
             const confirmed = confirm(
-                `V7.2.3 - 答题完成！\n\n` +
+                `V7.4.1 - 答题完成！\n\n` +
                 `题库统计:\n` +
                 `  总题目: ${this.allQuestions.length}题\n` +
                 `  基础信息: ${this.basicInfoCount}题\n` +
@@ -756,7 +967,7 @@
             return;
         }
         
-        console.log('V7.2.3 - 启动自动答题...');
+        console.log('V7.4.1 - 启动自动答题...');
         console.log(`运行在Electron中，速度: ${selectedSpeed.name}, 正确率: ${(accuracy * 100).toFixed(0)}%`);
         
         // 更新状态
@@ -774,7 +985,7 @@
     
     // ==================== 初始化 ====================
     function init() {
-        console.log('答题脚本 V7.2.3 已加载');
+        console.log('答题脚本 V7.4.1 已加载');
         console.log('正在初始化...');
         
         // 检查是否有答案数据
@@ -849,6 +1060,6 @@
         setTimeout(init, 100);
     }
     
-    console.log('Electron版答题脚本 V7.2.3 初始化完成');
+    console.log('Electron版答题脚本 V7.4.1 初始化完成，支持图片URL匹配');
     
 })();

@@ -21,7 +21,7 @@ function createMainWindow() {
             webSecurity: false,
             devTools: true
         },
-        title: '问卷星自动答题器 V7.2.3 - 题库管理版',
+        title: '问卷星自动答题器 V7.4.1 - 题库管理版',
         show: false
     });
 
@@ -98,7 +98,7 @@ function createWjxWindow(config) {
     
     // 构建问卷URL
     const wjxUrl = `https://ks.wjx.com/vm/${config.urlSuffix}`;
-    console.log('V7.2.3 - 加载问卷页面:', wjxUrl);
+    console.log('V7.4.1 - 加载问卷页面:', wjxUrl);
     
     wjxWindow.loadURL(wjxUrl);
     
@@ -135,7 +135,7 @@ function createWjxWindow(config) {
             
             // 创建注入脚本
             const injectScript = `
-                // 注入配置 V7.2.3
+                // 注入配置 V7.4.1
                 window.ElectronSpeedConfig = ${JSON.stringify(config.speedConfig)};
                 window.ElectronAccuracy = ${config.accuracy / 100};
                 window.ElectronAnswers = ${JSON.stringify(config.answers || {})};
@@ -231,7 +231,7 @@ app.on('window-all-closed', () => {
 
 // IPC通信处理
 ipcMain.handle('open-wjx', async (event, config) => {
-    console.log('V7.2.3 - 打开问卷页面，配置:', {
+    console.log('V7.4.1 - 打开问卷页面，配置:', {
         speed: config.speedConfig.name,
         accuracy: config.accuracy,
         urlSuffix: config.urlSuffix,
@@ -482,6 +482,43 @@ ipcMain.handle('import-banks-from-folder', async (event) => {
         console.error('批量导入题库失败:', error);
         return { success: false, error: error.message };
     }
+});
+
+// 在主进程代码中添加
+ipcMain.handle('show-input-dialog', async (event, options) => {
+    const { dialog } = require('electron');
+    
+    const result = await dialog.showMessageBox({
+        type: 'question',
+        buttons: ['确定', '取消'],
+        title: options.title || '输入',
+        message: options.message || '请输入:',
+        detail: '请在下方输入框中输入内容',
+        defaultId: 0,
+        cancelId: 1,
+        input: options.defaultValue || '',
+        inputPlaceholder: options.placeholder || '',
+        inputLabel: '输入:',
+        inputAttributes: {
+            maxlength: '100'
+        }
+    });
+    
+    // 注意：showMessageBox 在 Electron 中不直接支持输入框
+    // 我们需要使用 showInputBox 或其他方法
+    
+    // 实际上，Electron 的 dialog.showMessageBox 不支持输入框
+    // 我们需要使用 dialog.showInputBox（如果可用）或自定义窗口
+    
+    // 这里使用一个简单的自定义方案
+    const inputResult = await dialog.showInputBox({
+        title: options.title || '输入',
+        message: options.message || '请输入:',
+        defaultValue: options.defaultValue || '',
+        placeholder: options.placeholder || ''
+    });
+    
+    return { input: inputResult };
 });
 
 // 辅助函数：转换题库为CSV格式

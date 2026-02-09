@@ -1,7 +1,7 @@
 {
   "name": "wjx-auto-answer",
-  "version": "7.2.3",
-  "description": "问卷星自动答题器 V7.2.3 - Design By MCXGJKH",
+  "version": "7.4.1",
+  "description": "问卷星自动答题器 V7.4.1 - Design By MCXGJKH",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -29,7 +29,7 @@
   },
   "build": {
     "appId": "com.mcxgjkh.wjxautoanswer",
-    "productName": "问卷星自动答题器 V7.2.3",
+    "productName": "问卷星自动答题器 V7.4.1",
     "copyright": "Copyright © 2026 MCXGJKH",
     "directories": {
       "output": "dist"
@@ -73,7 +73,7 @@
       ]
     },
     "portable": {
-      "artifactName": "${productName} ${arch} 便携版.${ext}",
+      "artifactName": "${productName} ${arch} portable便携版.${ext}",
       "requestExecutionLevel": "user"
     },
     "nsis": {
@@ -82,7 +82,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "问卷星答题器 ${version}",
-      "artifactName": "${productName} ${arch} 安装版.${ext}"
+      "artifactName": "${productName} ${arch} installer安装版.${ext}"
     },
     "asar": true,
     "compression": "maximum",

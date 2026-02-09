@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>问卷星自动答题器 V7.2.3</title>
+    <title>问卷星自动答题器 V7.4.1</title>
     <style>
         /* 美化滚动条样式 */
         ::-webkit-scrollbar {
@@ -157,6 +157,130 @@
         .url-input-field input:focus {
             outline: none;
             border-color: #667eea;
+        }
+        
+        /* 链接历史按钮样式 */
+        .history-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #0D47A1 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 15px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .history-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
+        }
+        
+        .history-btn:active {
+            transform: translateY(0);
+        }
+        
+        /* 历史记录模态框样式 */
+        .history-modal .modal-content {
+            max-width: 700px;
+        }
+        
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .history-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(102, 126, 234, 0.3);
+        }
+        
+        .history-item.selected {
+            background: rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
+        }
+        
+        .history-info {
+            flex: 1;
+            margin-right: 15px;
+        }
+        
+        .history-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #8a8aff;
+            margin-bottom: 5px;
+        }
+        
+        .history-url {
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            color: #aaa;
+            word-break: break-all;
+        }
+        
+        .history-date {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .history-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .history-action-btn {
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .history-action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .history-action-btn.delete:hover {
+            color: #f44336;
+        }
+        
+        .history-action-btn.select:hover {
+            color: #4CAF50;
+        }
+        
+        .history-empty {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .history-empty i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
         }
         
         /* 正确率控制样式 */
@@ -848,6 +972,22 @@
                     opacity: 0;
                 }
             }
+            
+            /* 移动端历史按钮样式 */
+            .history-btn {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+            
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .history-actions {
+                margin-top: 10px;
+                align-self: flex-end;
+            }
         }
     </style>
 </head>
@@ -855,7 +995,7 @@
     <div class="container">
         <div class="header">
             <h1>问卷星自动答题器</h1>
-            <div class="subtitle">V7.2.3 智能识别 | 题库管理版</div>
+            <div class="subtitle">V7.4.1 智能识别 | 题库管理版 | 链接历史功能</div>
             <div class="version">Design By MCXGJKH</div>
         </div>
         
@@ -866,9 +1006,16 @@
                 <div class="url-input">
                     <div class="url-prefix">
                         <span class="prefix">https://ks.wjx.com/vm/</span>
+                        <span style="color: #8a8aff; font-size: 12px; margin-left: auto;">链接历史: <span id="historyCount">0</span> 条</span>
                     </div>
                     <div class="url-input-field">
                         <input type="text" id="urlSuffix" placeholder="wRSroLM.aspx" value="wRSroLM.aspx">
+                        <button class="history-btn" id="historyBtn" title="管理链接历史">
+                            <span>📋 历史</span>
+                        </button>
+                    </div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                        当前链接标题: <span id="currentUrlTitle">未设置</span>
                     </div>
                 </div>
                 
@@ -994,13 +1141,14 @@
             <h3 style="color: #8a8aff; margin-bottom: 15px; font-size: 20px;">使用说明</h3>
             <div style="color: #ccc; line-height: 1.6;">
                 <ul style="padding-left: 20px; margin: 10px 0;">
-                    <li>1. 输入问卷链接后缀 (如: wRSroLM.aspx)</li>
+                    <li>1. 输入问卷链接后缀 (如: wRSroLM.aspx) 或从历史记录中选择</li>
                     <li>2. 选择或创建题库 (支持最多1000条题目，每100行自动扩展)</li>
                     <li>3. 设置正确率 (0-100%，采用去一法保证实际正确率≥设定值)</li>
                     <li>4. 选择答题速度</li>
                     <li>5. 点击"打开问卷页面"按钮</li>
-                    <li>6. 等待页面加载完成后点击右下角“开始答题”</li>
+                    <li>6. 等待页面加载完成后点击右下角"开始答题"</li>
                     <li>7. 答题完成后会弹出确认提交对话框</li>
+                    <li>8. 新的链接会自动保存到历史记录，下次可一键选择</li>
                 </ul>
                 <p><strong>注意：</strong>本程序仅用于学习研究，请勿用于非法用途</p>
                 <p><strong>注意：</strong>下载者请在24小时内自行删除</p>
@@ -1030,7 +1178,7 @@
         </div>
         
         <div class="footer">
-            © 2026 MCXGJKH | 问卷星自动答题器 V7.2.3 - 题库管理版
+            © 2026 MCXGJKH | 问卷星自动答题器 V7.4.1 - 题库管理版 | 链接历史功能
         </div>
     </div>
 
@@ -1157,6 +1305,36 @@
             <div class="modal-actions">
                 <button class="btn btn-open" id="closeInfoBtn" style="flex: none; padding: 12px 25px;">
                     关闭
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 链接历史记录模态框 -->
+    <div class="modal history-modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📋 链接历史记录</h3>
+                <button class="close-modal" id="closeHistoryModalBtn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="history-list" id="historyList">
+                    <!-- 历史记录会动态加载到这里 -->
+                </div>
+                
+                <div id="historyEmpty" class="history-empty" style="display: none;">
+                    <div>📝</div>
+                    <div>暂无历史记录</div>
+                    <div style="font-size: 14px; margin-top: 10px; color: #666;">
+                        打开新的问卷链接后，会自动保存到这里
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-open" id="clearHistoryBtn" style="flex: none; padding: 12px 25px;">
+                    清空全部历史
                 </button>
             </div>
         </div>
@@ -1316,13 +1494,30 @@
         let maxLines = 100; // 初始最大行数
         let bankToDelete = ""; // 要删除的题库名称
         
+        // 链接历史记录数据
+        let urlHistory = [];
+        let currentUrlId = null; // 当前选中的链接ID
+        
         // 初始化
         document.addEventListener('DOMContentLoaded', () => {
             renderSpeedOptions();
             setupEventListeners();
             loadBanksFromStorage();
+            loadUrlHistory();
+
+            // 检查是否需要添加默认历史记录
+            const defaultUrl = "wRSroLM.aspx";
+            const defaultTitle = "理化生模拟-化学";
+
+            if (urlHistory.length === 0) {
+                // 添加默认历史记录
+                addUrlToHistory(defaultUrl, defaultTitle);
+                log('已添加默认链接历史记录: ' + defaultTitle, 'info');
+            }
+            
             updateBankSelect();
             updateBankPreview();
+            updateHistoryCount();
             // 添加快捷键提示
             addKeyboardShortcutInfo();
             // 监听键盘事件（可选，用于显示提示）
@@ -1333,7 +1528,7 @@
                     showShortcutNotification('F12: 打开/关闭开发者工具');
                 }
             });
-            log('程序初始化完成 V7.2.3', 'success');
+            log('程序初始化完成 V7.4.1', 'success');
         });
 
         // 在addKeyboardShortcutInfo函数中修改快捷键说明：
@@ -1344,7 +1539,7 @@
                 const shortcutLog = document.createElement('div');
                 shortcutLog.className = 'log info';
                 shortcutLog.innerHTML = `
-                    <strong>V7.2.3 快捷键说明：</strong><br>
+                    <strong>V7.4.1 快捷键说明：</strong><br>
                     • <b>F12</b>: 打开/关闭开发者工具（如无效请检查系统设置）<br>
                     • <b>Ctrl+Shift+I</b>: 打开/关闭开发者工具（备用）<br>
                     • <b>F5/Ctrl+R</b>: 刷新当前页面<br>
@@ -1455,6 +1650,9 @@
                 if (value && !value.match(/^[a-zA-Z0-9_\-\.]+$/)) {
                     log('警告: 链接后缀只能包含字母、数字、下划线、连字符和点号', 'warning');
                 }
+                // 清除当前链接ID
+                currentUrlId = null;
+                document.getElementById('currentUrlTitle').textContent = '未设置';
             });
             
             // 题库选择
@@ -1465,6 +1663,21 @@
                 log(`已选择题库: ${selectedBank}`, 'success');
             });
 
+            // 链接历史按钮
+            document.getElementById('historyBtn').addEventListener('click', () => {
+                showHistoryModal();
+            });
+            
+            // 链接历史模态框关闭按钮
+            document.getElementById('closeHistoryModalBtn').addEventListener('click', () => {
+                document.getElementById('historyModal').style.display = 'none';
+            });
+            
+            // 清空历史按钮
+            document.getElementById('clearHistoryBtn').addEventListener('click', () => {
+                clearUrlHistory();
+            });
+            
             // 添加键盘事件监听（页面内）
             document.addEventListener('keydown', (e) => {
                 // F12键
@@ -1839,6 +2052,220 @@
             }
         }
         
+        // 加载链接历史记录
+        function loadUrlHistory() {
+            try {
+                const savedHistory = localStorage.getItem('urlHistoryV7');
+                if (savedHistory) {
+                    urlHistory = JSON.parse(savedHistory);
+                    log(`加载链接历史记录成功: ${urlHistory.length} 条`, 'success');
+                } else {
+                    urlHistory = [];
+                    log('无历史链接记录', 'info');
+                }
+            } catch (e) {
+                log('加载链接历史记录失败: ' + e.message, 'error');
+                urlHistory = [];
+            }
+        }
+        
+        // 保存链接历史记录
+        function saveUrlHistory() {
+            try {
+                localStorage.setItem('urlHistoryV7', JSON.stringify(urlHistory));
+                updateHistoryCount();
+                return true;
+            } catch (e) {
+                log('保存链接历史记录失败: ' + e.message, 'error');
+                return false;
+            }
+        }
+        
+        // 更新历史记录数量显示
+        function updateHistoryCount() {
+            const historyCountElement = document.getElementById('historyCount');
+            if (historyCountElement) {
+                historyCountElement.textContent = urlHistory.length;
+            }
+        }
+        
+        // 显示链接历史记录模态框
+        function showHistoryModal() {
+            const historyList = document.getElementById('historyList');
+            const historyEmpty = document.getElementById('historyEmpty');
+            
+            if (urlHistory.length === 0) {
+                historyList.style.display = 'none';
+                historyEmpty.style.display = 'block';
+            } else {
+                historyList.style.display = 'block';
+                historyEmpty.style.display = 'none';
+                
+                // 按最后访问时间倒序排序
+                const sortedHistory = [...urlHistory].sort((a, b) => new Date(b.lastAccessed) - new Date(a.lastAccessed));
+                
+                historyList.innerHTML = '';
+                
+                sortedHistory.forEach((item, index) => {
+                    const historyItem = document.createElement('div');
+                    historyItem.className = 'history-item';
+                    if (item.id === currentUrlId) {
+                        historyItem.classList.add('selected');
+                    }
+                    
+                    historyItem.innerHTML = `
+                        <div class="history-info">
+                            <div class="history-title">${item.title || '未命名链接'}</div>
+                            <div class="history-url">${item.suffix}</div>
+                            <div class="history-date">最后访问: ${formatDate(item.lastAccessed)}</div>
+                        </div>
+                        <div class="history-actions">
+                            <button class="history-action-btn select" title="选择此链接" data-id="${item.id}">
+                                ✅
+                            </button>
+                            <button class="history-action-btn delete" title="删除此链接" data-id="${item.id}">
+                                ❌
+                            </button>
+                        </div>
+                    `;
+                    
+                    historyList.appendChild(historyItem);
+                });
+                
+                // 添加事件监听
+                document.querySelectorAll('.history-action-btn.select').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        selectHistoryItem(id);
+                    });
+                });
+                
+                document.querySelectorAll('.history-action-btn.delete').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        deleteHistoryItem(id);
+                    });
+                });
+            }
+            
+            document.getElementById('historyModal').style.display = 'flex';
+        }
+        
+        // 选择历史记录项
+        function selectHistoryItem(id) {
+            const item = urlHistory.find(h => h.id === id);
+            if (item) {
+                document.getElementById('urlSuffix').value = item.suffix;
+                currentUrlId = item.id;
+                document.getElementById('currentUrlTitle').textContent = item.title || '未命名链接';
+                
+                // 更新最后访问时间
+                item.lastAccessed = new Date().toISOString();
+                saveUrlHistory();
+                
+                log(`已选择链接: ${item.title || item.suffix}`, 'success');
+                document.getElementById('historyModal').style.display = 'none';
+            }
+        }
+        
+        // 删除历史记录项
+        function deleteHistoryItem(id) {
+            const index = urlHistory.findIndex(h => h.id === id);
+            if (index !== -1) {
+                const item = urlHistory[index];
+                if (confirm(`确定要删除链接 "${item.title || item.suffix}" 吗？`)) {
+                    urlHistory.splice(index, 1);
+                    saveUrlHistory();
+                    
+                    // 如果删除的是当前选中的链接，清除当前选择
+                    if (currentUrlId === id) {
+                        currentUrlId = null;
+                        document.getElementById('currentUrlTitle').textContent = '未设置';
+                    }
+                    
+                    log(`已删除链接: ${item.title || item.suffix}`, 'success');
+                    showHistoryModal(); // 刷新显示
+                }
+            }
+        }
+        
+        // 清空所有历史记录
+        function clearUrlHistory() {
+            if (urlHistory.length === 0) {
+                return;
+            }
+            
+            if (confirm(`确定要清空所有 ${urlHistory.length} 条链接历史记录吗？此操作不可恢复！`)) {
+                urlHistory = [];
+                saveUrlHistory();
+                currentUrlId = null;
+                document.getElementById('currentUrlTitle').textContent = '未设置';
+                
+                log('已清空所有链接历史记录', 'success');
+                showHistoryModal(); // 刷新显示
+            }
+        }
+        
+        // 添加或更新链接历史记录
+        function addUrlToHistory(suffix, title) {
+            // 检查是否已存在相同后缀的链接
+            const existingIndex = urlHistory.findIndex(h => h.suffix === suffix);
+            
+            if (existingIndex !== -1) {
+                // 更新现有记录
+                urlHistory[existingIndex].title = title || urlHistory[existingIndex].title;
+                urlHistory[existingIndex].lastAccessed = new Date().toISOString();
+                currentUrlId = urlHistory[existingIndex].id;
+            } else {
+                // 添加新记录
+                const newItem = {
+                    id: Date.now().toString(),
+                    suffix: suffix,
+                    title: title || `链接 ${urlHistory.length + 1}`,
+                    created: new Date().toISOString(),
+                    lastAccessed: new Date().toISOString()
+                };
+                
+                urlHistory.push(newItem);
+                currentUrlId = newItem.id;
+                
+                // 限制历史记录数量（最多50条）
+                if (urlHistory.length > 50) {
+                    // 按最后访问时间排序，删除最老的
+                    urlHistory.sort((a, b) => new Date(a.lastAccessed) - new Date(b.lastAccessed));
+                    urlHistory.shift();
+                }
+            }
+            
+            saveUrlHistory();
+            updateHistoryCount();
+            document.getElementById('currentUrlTitle').textContent = title || '未命名链接';
+            
+            return currentUrlId;
+        }
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) {
+                return '刚刚';
+            } else if (diffMins < 60) {
+                return `${diffMins}分钟前`;
+            } else if (diffHours < 24) {
+                return `${diffHours}小时前`;
+            } else if (diffDays < 7) {
+                return `${diffDays}天前`;
+            } else {
+                return date.toLocaleDateString('zh-CN');
+            }
+        }
+        
         // 更新题库选择下拉框
         function updateBankSelect() {
             const bankSelect = document.getElementById('bankSelect');
@@ -2174,7 +2601,7 @@
                     startQuestionNum: bank.startQuestionNum || 3,
                     answers: bank.answers,
                     exportInfo: {
-                        version: 'V7.2.3',
+                        version: 'V7.4.1',
                         exportedAt: new Date().toISOString(),
                         totalQuestions: totalQuestions,
                         basicInfoCount: bank.basicInfoCount || 2
@@ -2517,6 +2944,40 @@
                 return;
             }
             
+            // 检查是否是新链接
+            const isNewUrl = !urlHistory.some(h => h.suffix === urlSuffix);
+            
+            // 如果是新链接，使用自定义的输入框来获取标题
+            let urlTitle = '';
+            if (isNewUrl) {
+                try {
+                    // 使用Electron的对话框API，如果不可用则使用备用方法
+                    if (window.electronAPI && window.electronAPI.showInputDialog) {
+                        const result = await window.electronAPI.showInputDialog({
+                            title: '输入链接标题',
+                            message: '请输入此问卷链接的标题（用于历史记录识别）:',
+                            defaultValue: `问卷 ${urlHistory.length + 1}`
+                        });
+                        
+                        if (result && result.input) {
+                            urlTitle = result.input.trim();
+                        } else {
+                            log('用户取消输入标题，链接未保存到历史记录', 'warning');
+                        }
+                    } else {
+                        // 备用方法：使用自定义模态框
+                        urlTitle = await showCustomInputDialog('问卷链接标题', '请输入此问卷链接的标题（用于历史记录识别）:', `问卷 ${urlHistory.length + 1}`);
+                    }
+                } catch (error) {
+                    console.error('获取标题时出错:', error);
+                    // 如果出错，使用默认标题
+                    urlTitle = `问卷 ${urlHistory.length + 1}`;
+                }
+            }
+            
+            // 保存到历史记录
+            addUrlToHistory(urlSuffix, urlTitle);
+            
             // 计算需要正确的题目数
             const neededCorrect = Math.ceil(validQuestions * accuracy / 100);
             const actualAccuracy = (neededCorrect / validQuestions * 100).toFixed(1);
@@ -2552,6 +3013,80 @@
             } catch (error) {
                 log(`打开页面出错: ${error.message}`, 'error');
             }
+        }
+
+        // 自定义输入对话框函数
+        function showCustomInputDialog(title, message, defaultValue) {
+            return new Promise((resolve) => {
+                // 创建模态框
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.style.display = 'flex';
+                modal.style.zIndex = '2000';
+                
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 500px;">
+                        <div class="modal-header">
+                            <h3 style="color: #8a8aff;">${title}</h3>
+                            <button class="close-modal" id="closeCustomDialog">&times;</button>
+                        </div>
+                        
+                        <div class="modal-body">
+                            <div style="color: #ccc; line-height: 1.6; margin-bottom: 20px;">
+                                ${message}
+                            </div>
+                            <input type="text" 
+                                id="customInput" 
+                                style="width: 100%; padding: 12px 15px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; color: white; font-size: 16px;"
+                                value="${defaultValue || ''}">
+                        </div>
+                        
+                        <div class="modal-actions">
+                            <button class="btn btn-open" id="cancelCustomDialog" style="flex: none; padding: 12px 25px;">
+                                取消
+                            </button>
+                            <button class="btn btn-start" id="confirmCustomDialog" style="flex: none; padding: 12px 25px;">
+                                确定
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // 聚焦输入框
+                setTimeout(() => {
+                    const input = document.getElementById('customInput');
+                    if (input) {
+                        input.focus();
+                        input.select();
+                    }
+                }, 100);
+                
+                // 添加事件监听
+                document.getElementById('closeCustomDialog').addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                    resolve(null);
+                });
+                
+                document.getElementById('cancelCustomDialog').addEventListener('click', () => {
+                    document.body.removeChild(modal);
+                    resolve(null);
+                });
+                
+                document.getElementById('confirmCustomDialog').addEventListener('click', () => {
+                    const inputValue = document.getElementById('customInput').value.trim();
+                    document.body.removeChild(modal);
+                    resolve(inputValue || defaultValue);
+                });
+                
+                // 按回车键确认
+                document.getElementById('customInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        document.getElementById('confirmCustomDialog').click();
+                    }
+                });
+            });
         }
         
         // 开始自动答题
