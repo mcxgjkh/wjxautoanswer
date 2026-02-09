@@ -32,27 +32,40 @@ cls
 echo 正在复制必要构建文件...
 set localpath=%~dp0
 set filepath=%LOCALAPPDATA%\electron\Cache\
-if exist %filepath% (
-	xcopy .\build_dependencies\electron-v25.9.8-win32-x64.zip %LOCALAPPDATA%\electron\Cache
-    xcopy .\build_dependencies\electron-v25.9.8-win32-ia32.zip %LOCALAPPDATA%\electron\Cache
-) else (
-    cd %LOCALAPPDATA%
-    mkdir -p \electron\Cache\
-    xcopy %localpath%\build_dependencies\electron-v25.9.8-win32-x64.zip %LOCALAPPDATA%\Local\electron\Cache
-    xcopy %localpath%\build_dependencies\electron-v25.9.8-win32-ia32.zip %LOCALAPPDATA%\Local\electron\Cache
-)
 set filepath2=%LOCALAPPDATA%\electron-builder\Cache
-if exist %filepath2% (
-	xcopy .\build_dependencies\nsis %LOCALAPPDATA%\electron-builder\Cache /E
-    xcopy .\build_dependencies\winCodeSign %LOCALAPPDATA%\electron-builder\Cache /E
+echo 您同意吗？(yes/no)
+set /p allow=请输入yes或no：
+if /i %allow% EQU yes (
+    if exist %filepath% (
+        xcopy .\build_dependencies\electron-v25.9.8-win32-x64.zip %LOCALAPPDATA%\electron\Cache
+        xcopy .\build_dependencies\electron-v25.9.8-win32-ia32.zip %LOCALAPPDATA%\electron\Cache
+    ) else (
+        cd %LOCALAPPDATA%
+        mkdir -p \electron\Cache\
+        xcopy %localpath%\build_dependencies\electron-v25.9.8-win32-x64.zip %LOCALAPPDATA%\Local\electron\Cache
+        xcopy %localpath%\build_dependencies\electron-v25.9.8-win32-ia32.zip %LOCALAPPDATA%\Local\electron\Cache
+    )
+    if exist %filepath2% (
+        xcopy .\build_dependencies\nsis %LOCALAPPDATA%\electron-builder\Cache /E
+        xcopy .\build_dependencies\winCodeSign %LOCALAPPDATA%\electron-builder\Cache /E
+    ) else (
+        cd %LOCALAPPDATA%
+        mkdir -p \electron-builder\Cache
+        xcopy %localpath%\build_dependencies\nsis %LOCALAPPDATA%\electron-builder\Cache /E
+        xcopy %localpath%\build_dependencies\winCodeSign %LOCALAPPDATA%\electron-builder\Cache /E
+    )
+    pause
+    cls
+) else if /i %allow% EQU no (
+    echo 好的，依赖请自行安装
+    pause
+    cls
 ) else (
-    cd %LOCALAPPDATA%
-    mkdir -p \electron-builder\Cache
-    xcopy %localpath%\build_dependencies\nsis %LOCALAPPDATA%\electron-builder\Cache /E
-    xcopy %localpath%\build_dependencies\winCodeSign %LOCALAPPDATA%\electron-builder\Cache /E
+    echo 输入值非法
+    echo 请关闭后重试
+    pause
+    cls
 )
-pause
-cls
 
 color 0f
 echo 按0可退出
