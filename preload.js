@@ -13,6 +13,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openDevTools: () => ipcRenderer.invoke('open-dev-tools'),
     closeDevTools: () => ipcRenderer.invoke('close-dev-tools'),
 
+    // 题库导入导出
+    exportBank: (bankData) => ipcRenderer.invoke('export-bank', bankData),
+    importBank: () => ipcRenderer.invoke('import-bank'),
+    importBanksFromFolder: () => ipcRenderer.invoke('import-banks-from-folder'),
+
     // 事件监听
     onWjxLoaded: (callback) => ipcRenderer.on('wjx-loaded', (event, ...args) => callback(...args)),
     onWjxClosed: (callback) => ipcRenderer.on('wjx-closed', () => callback()),

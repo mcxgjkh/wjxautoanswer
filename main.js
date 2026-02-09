@@ -1,5 +1,7 @@
-const { app, BrowserWindow, ipcMain, shell, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs').promises;
+const fsSync = require('fs');
 
 let mainWindow = null;
 let wjxWindow = null;
@@ -19,7 +21,7 @@ function createMainWindow() {
             webSecurity: false,
             devTools: true
         },
-        title: '问卷星自动答题器 V7.1.2 - 题库管理版',
+        title: '问卷星自动答题器 V7.2.2 - 题库管理版',
         show: false
     });
 
@@ -96,7 +98,7 @@ function createWjxWindow(config) {
     
     // 构建问卷URL
     const wjxUrl = `https://ks.wjx.com/vm/${config.urlSuffix}`;
-    console.log('V7.1.2 - 加载问卷页面:', wjxUrl);
+    console.log('V7.2.2 - 加载问卷页面:', wjxUrl);
     
     wjxWindow.loadURL(wjxUrl);
     
@@ -133,7 +135,7 @@ function createWjxWindow(config) {
             
             // 创建注入脚本
             const injectScript = `
-                // 注入配置 V7.1.2
+                // 注入配置 V7.2.2
                 window.ElectronSpeedConfig = ${JSON.stringify(config.speedConfig)};
                 window.ElectronAccuracy = ${config.accuracy / 100};
                 window.ElectronAnswers = ${JSON.stringify(config.answers || {})};
@@ -229,7 +231,7 @@ app.on('window-all-closed', () => {
 
 // IPC通信处理
 ipcMain.handle('open-wjx', async (event, config) => {
-    console.log('V7.1.2 - 打开问卷页面，配置:', {
+    console.log('V7.2.2 - 打开问卷页面，配置:', {
         speed: config.speedConfig.name,
         accuracy: config.accuracy,
         urlSuffix: config.urlSuffix,
@@ -328,3 +330,272 @@ ipcMain.handle('open-external', async (event, url) => {
     await shell.openExternal(url);
     return { success: true };
 });
+
+// 添加题库处理
+ipcMain.handle('export-bank', async (event, bankData) => {
+    try {
+        const { canceled, filePath } = await dialog.showSaveDialog({
+            title: '导出题库',
+            defaultPath: `${bankData.name}.json`,
+            filters: [
+                { name: 'JSON 文件', extensions: ['json'] },
+                { name: 'CSV 文件', extensions: ['csv'] },
+                { name: '所有文件', extensions: ['*'] }
+            ],
+            properties: ['createDirectory', 'showOverwriteConfirmation']
+        });
+        
+        if (canceled || !filePath) {
+            return { success: false, error: '用户取消操作' };
+        }
+        
+        const format = path.extname(filePath).toLowerCase();
+        let fileContent;
+        
+        if (format === '.csv') {
+            // 转换为CSV格式
+            fileContent = convertBankToCSV(bankData);
+        } else {
+            // 默认为JSON格式
+            fileContent = JSON.stringify(bankData, null, 2);
+        }
+        
+        await fs.writeFile(filePath, fileContent, 'utf-8');
+        
+        // 返回导出的文件路径
+        return { 
+            success: true, 
+            filePath: filePath,
+            format: format,
+            size: fileContent.length
+        };
+    } catch (error) {
+        console.error('导出题库失败:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('import-bank', async (event) => {
+    try {
+        const { canceled, filePaths } = await dialog.showOpenDialog({
+            title: '导入题库',
+            filters: [
+                { name: '题库文件', extensions: ['json', 'csv', 'txt'] },
+                { name: '所有文件', extensions: ['*'] }
+            ],
+            properties: ['openFile', 'multiSelections']
+        });
+        
+        if (canceled || filePaths.length === 0) {
+            return { success: false, error: '用户取消操作' };
+        }
+        
+        const importedBanks = [];
+        
+        for (const filePath of filePaths) {
+            try {
+                const fileContent = await fs.readFile(filePath, 'utf-8');
+                const format = path.extname(filePath).toLowerCase();
+                
+                let bankData;
+                if (format === '.csv') {
+                    bankData = parseCSVToBank(fileContent, path.basename(filePath, '.csv'));
+                } else {
+                    bankData = JSON.parse(fileContent);
+                }
+                
+                // 验证数据格式
+                if (validateBankData(bankData)) {
+                    importedBanks.push({
+                        ...bankData,
+                        originalPath: filePath,
+                        importedAt: new Date().toISOString()
+                    });
+                } else {
+                    importedBanks.push({
+                        error: `文件 ${path.basename(filePath)} 格式无效`,
+                        path: filePath
+                    });
+                }
+            } catch (error) {
+                importedBanks.push({
+                    error: `导入失败: ${error.message}`,
+                    path: filePath
+                });
+            }
+        }
+        
+        return { 
+            success: true, 
+            importedBanks: importedBanks,
+            total: importedBanks.length,
+            successful: importedBanks.filter(b => !b.error).length
+        };
+    } catch (error) {
+        console.error('导入题库失败:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+ipcMain.handle('import-banks-from-folder', async (event) => {
+    try {
+        const { canceled, filePaths } = await dialog.showOpenDialog({
+            title: '批量导入题库（选择文件夹）',
+            properties: ['openDirectory', 'createDirectory']
+        });
+        
+        if (canceled || filePaths.length === 0) {
+            return { success: false, error: '用户取消操作' };
+        }
+        
+        const folderPath = filePaths[0];
+        const files = await fs.readdir(folderPath);
+        const jsonFiles = files.filter(f => f.toLowerCase().endsWith('.json'));
+        
+        const importedBanks = [];
+        
+        for (const fileName of jsonFiles) {
+            const filePath = path.join(folderPath, fileName);
+            try {
+                const fileContent = await fs.readFile(filePath, 'utf-8');
+                const bankData = JSON.parse(fileContent);
+                
+                if (validateBankData(bankData)) {
+                    importedBanks.push({
+                        ...bankData,
+                        originalPath: filePath,
+                        importedAt: new Date().toISOString()
+                    });
+                }
+            } catch (error) {
+                console.warn(`导入文件 ${fileName} 失败:`, error.message);
+            }
+        }
+        
+        return { 
+            success: true, 
+            importedBanks: importedBanks,
+            total: jsonFiles.length,
+            successful: importedBanks.length
+        };
+    } catch (error) {
+        console.error('批量导入题库失败:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// 辅助函数：转换题库为CSV格式
+function convertBankToCSV(bankData) {
+    const { name, description, basicInfoCount, startQuestionNum, answers } = bankData;
+    
+    let csv = `题库名称: ${name}\n`;
+    csv += `描述: ${description || ''}\n`;
+    csv += `基础信息题数: ${basicInfoCount}\n`;
+    csv += `起始题目编号: ${startQuestionNum}\n`;
+    csv += `\n`;
+    csv += `题目编号,答案,其他选项格式\n`;
+    
+    // 按题目编号排序
+    const sortedQuestions = Object.keys(answers)
+        .filter(key => key.match(/^\d+$/))
+        .map(Number)
+        .sort((a, b) => a - b);
+    
+    for (const questionNum of sortedQuestions) {
+        const answerArray = answers[questionNum.toString()];
+        if (answerArray && answerArray.length > 0) {
+            const mainAnswer = answerArray[0];
+            const otherFormats = answerArray.slice(1).join('; ');
+            csv += `${questionNum},"${mainAnswer}","${otherFormats}"\n`;
+        }
+    }
+    
+    return csv;
+}
+
+// 辅助函数：解析CSV为题库格式
+function parseCSVToBank(csvContent, fileName) {
+    const lines = csvContent.split('\n').filter(line => line.trim() !== '');
+    
+    if (lines.length < 6) {
+        throw new Error('CSV格式无效，行数不足');
+    }
+    
+    const bankName = lines[0].replace('题库名称: ', '').trim();
+    const description = lines[1].replace('描述: ', '').trim();
+    const basicInfoCount = parseInt(lines[2].replace('基础信息题数: ', '').trim()) || 0;
+    const startQuestionNum = parseInt(lines[3].replace('起始题目编号: ', '').trim()) || 3;
+    
+    // 跳过头信息行
+    const answerLines = lines.slice(6); // 跳过标题行和空行
+    
+    const answers = {};
+    
+    for (const line of answerLines) {
+        // 处理CSV中的引号和逗号
+        const parts = [];
+        let currentPart = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                parts.push(currentPart.trim());
+                currentPart = '';
+            } else {
+                currentPart += char;
+            }
+        }
+        parts.push(currentPart.trim());
+        
+        if (parts.length >= 2) {
+            const questionNum = parts[0].trim();
+            if (questionNum && !isNaN(parseInt(questionNum))) {
+                const mainAnswer = parts[1].replace(/^"|"$/g, '');
+                
+                if (mainAnswer) {
+                    const answerArray = [mainAnswer];
+                    
+                    // 添加其他格式的答案
+                    if (parts.length > 2) {
+                        const otherFormats = parts[2].replace(/^"|"$/g, '');
+                        if (otherFormats) {
+                            const formats = otherFormats.split(';').map(f => f.trim()).filter(f => f);
+                            answerArray.push(...formats);
+                        }
+                    }
+                    
+                    answers[questionNum] = answerArray;
+                }
+            }
+        }
+    }
+    
+    return {
+        name: bankName || fileName,
+        description: description,
+        basicInfoCount: basicInfoCount,
+        startQuestionNum: startQuestionNum,
+        answers: answers
+    };
+}
+
+// 辅助函数：验证题库数据格式
+function validateBankData(bankData) {
+    if (!bankData || typeof bankData !== 'object') {
+        return false;
+    }
+    
+    if (!bankData.name || typeof bankData.name !== 'string') {
+        return false;
+    }
+    
+    if (!bankData.answers || typeof bankData.answers !== 'object') {
+        return false;
+    }
+    
+    return true;
+}

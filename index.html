@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>问卷星自动答题器 V7.1.2</title>
+    <title>问卷星自动答题器 V7.2.2</title>
     <style>
         /* 美化滚动条样式 */
         ::-webkit-scrollbar {
@@ -724,6 +724,44 @@
             .bank-items {
                 grid-template-columns: 1fr;
             }
+
+            /* 添加导入导出按钮样式 */
+            .bank-btn.import {
+                background: linear-gradient(135deg, #9C27B0 0%, #7B1FA2 100%);
+            }
+
+            .bank-btn.import:hover {
+                box-shadow: 0 5px 15px rgba(156, 39, 176, 0.4);
+            }
+
+            .bank-btn.export {
+                background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            }
+
+            .bank-btn.export:hover {
+                box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+            }
+
+            /* 添加动画样式 */
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes fadeOut {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                }
+            }
         }
     </style>
 </head>
@@ -731,7 +769,7 @@
     <div class="container">
         <div class="header">
             <h1>问卷星自动答题器</h1>
-            <div class="subtitle">V7.1.2 智能识别 | 题库管理版</div>
+            <div class="subtitle">V7.2.2 智能识别 | 题库管理版</div>
             <div class="version">Design By MCXGJKH</div>
         </div>
         
@@ -742,7 +780,6 @@
                 <div class="url-input">
                     <div class="url-prefix">
                         <span class="prefix">https://ks.wjx.com/vm/</span>
-                        <span>问卷链接后缀</span>
                     </div>
                     <div class="url-input-field">
                         <input type="text" id="urlSuffix" placeholder="wRSroLM.aspx" value="wRSroLM.aspx">
@@ -786,6 +823,8 @@
                             <button class="bank-btn" id="addBankBtn" title="添加新题库">+</button>
                             <button class="bank-btn edit" id="editBankBtn" title="编辑当前题库">✏️</button>
                             <button class="bank-btn delete" id="deleteBankBtn" title="删除当前题库">-</button>
+                            <button class="bank-btn import" id="importBankBtn" title="导入题库">📥</button>
+                            <button class="bank-btn export" id="exportBankBtn" title="导出当前题库">📤</button>
                             <button class="bank-btn info" id="bankInfoBtn" title="题库信息">i</button>
                         </div>
                     </div>
@@ -847,7 +886,7 @@
         </div>
         
         <div class="footer">
-            © 2026 MCXGJKH | 问卷星自动答题器 V7.1.2 - 题库管理版
+            © 2026 MCXGJKH | 问卷星自动答题器 V7.2.2 - 题库管理版
         </div>
     </div>
 
@@ -979,6 +1018,28 @@
         </div>
     </div>
 
+    <!-- 添加导入结果模态框 -->
+    <div class="modal" id="importResultModal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3 style="color: #2196F3;">📥 导入结果</h3>
+                <button class="close-modal" id="closeImportResultBtn">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div id="importResultContent" style="color: #ccc; line-height: 1.6;">
+                    <!-- 导入结果会动态显示在这里 -->
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-open" id="confirmImportBtn" style="flex: none; padding: 12px 25px;">
+                    确认导入
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 删除确认模态框 -->
     <div class="modal" id="deleteConfirmModal">
         <div class="modal-content" style="max-width: 500px;">
@@ -1032,6 +1093,7 @@
             </div>
         </div>
     </div>
+
 
     <script>
         // 速度配置（与answer-script.js保持一致）
@@ -1127,7 +1189,7 @@
                     showShortcutNotification('F12: 打开/关闭开发者工具');
                 }
             });
-            log('程序初始化完成 V7.1.2', 'success');
+            log('程序初始化完成 V7.2.2', 'success');
         });
 
         // 在addKeyboardShortcutInfo函数中修改快捷键说明：
@@ -1138,7 +1200,7 @@
                 const shortcutLog = document.createElement('div');
                 shortcutLog.className = 'log info';
                 shortcutLog.innerHTML = `
-                    <strong>V7.1.2 快捷键说明：</strong><br>
+                    <strong>V7.2.2 快捷键说明：</strong><br>
                     • <b>F12</b>: 打开/关闭开发者工具（如无效请检查系统设置）<br>
                     • <b>Ctrl+Shift+I</b>: 打开/关闭开发者工具（备用）<br>
                     • <b>F5/Ctrl+R</b>: 刷新当前页面<br>
@@ -1445,6 +1507,29 @@
                 }
                 
                 document.getElementById('bankInfoModal').style.display = 'flex';
+            });
+
+            // 导出题库按钮
+            document.getElementById('exportBankBtn').addEventListener('click', () => {
+                exportCurrentBank();
+            });
+            
+            // 导入题库按钮
+            document.getElementById('importBankBtn').addEventListener('click', () => {
+                importBank();
+            });
+            
+            // 批量导入按钮（可选，可以添加一个下拉菜单）
+            // 或者通过Ctrl+点击导入按钮触发批量导入
+            
+            // 导入结果模态框关闭按钮
+            document.getElementById('closeImportResultBtn').addEventListener('click', () => {
+                document.getElementById('importResultModal').style.display = 'none';
+            });
+            
+            // 确认导入按钮
+            document.getElementById('confirmImportBtn').addEventListener('click', () => {
+                confirmImportBanks();
             });
             
             // 题库编辑器相关
@@ -1918,6 +2003,345 @@
                 log('保存题库失败，请检查浏览器存储权限', 'error');
             }
         }
+
+        // 导出当前题库
+        async function exportCurrentBank() {
+            if (!selectedBank || !questionBanks[selectedBank]) {
+                log('请先选择题库', 'warning');
+                return;
+            }
+            
+            const bank = questionBanks[selectedBank];
+            const answers = bank.answers || {};
+            const totalQuestions = Object.keys(answers).length;
+            
+            if (totalQuestions === 0) {
+                log('当前题库为空，无法导出', 'warning');
+                return;
+            }
+            
+            log(`正在导出题库: ${selectedBank}...`, 'info');
+            
+            try {
+                const result = await window.electronAPI.exportBank({
+                    name: bank.name || selectedBank,
+                    description: bank.description || '',
+                    basicInfoCount: bank.basicInfoCount || 2,
+                    startQuestionNum: bank.startQuestionNum || 3,
+                    answers: bank.answers,
+                    exportInfo: {
+                        version: 'V7.2.2',
+                        exportedAt: new Date().toISOString(),
+                        totalQuestions: totalQuestions,
+                        basicInfoCount: bank.basicInfoCount || 2
+                    }
+                });
+                
+                if (result.success) {
+                    const sizeInKB = (result.size / 1024).toFixed(2);
+                    log(`题库导出成功: ${result.filePath} (${sizeInKB} KB, ${totalQuestions}题)`, 'success');
+                    
+                    // 显示成功通知
+                    showNotification(
+                        '导出成功',
+                        `题库 "${selectedBank}" 已成功导出为 ${result.format} 格式文件`,
+                        'success'
+                    );
+                } else {
+                    log(`导出失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                log(`导出出错: ${error.message}`, 'error');
+            }
+        }
+
+        // 导入题库
+        async function importBank() {
+            log('准备导入题库...', 'info');
+            
+            try {
+                const result = await window.electronAPI.importBank();
+                
+                if (result.success) {
+                    if (result.importedBanks.length === 0) {
+                        log('没有找到有效的题库文件', 'warning');
+                        return;
+                    }
+                    
+                    // 显示导入结果
+                    showImportResults(result.importedBanks, result.successful, result.total);
+                } else {
+                    log(`导入失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                log(`导入出错: ${error.message}`, 'error');
+            }
+        }
+
+        // 批量导入题库
+        async function batchImportBanks() {
+            log('准备批量导入题库...', 'info');
+            
+            try {
+                const result = await window.electronAPI.importBanksFromFolder();
+                
+                if (result.success) {
+                    if (result.importedBanks.length === 0) {
+                        log('文件夹中没有找到题库文件', 'warning');
+                        return;
+                    }
+                    
+                    // 显示导入结果
+                    showImportResults(result.importedBanks, result.successful, result.total);
+                } else {
+                    log(`批量导入失败: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                log(`批量导入出错: ${error.message}`, 'error');
+            }
+        }
+
+        // 显示导入结果
+        function showImportResults(importedBanks, successfulCount, totalCount) {
+            const contentDiv = document.getElementById('importResultContent');
+            
+            let html = `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #8a8aff;">导入结果</h4>
+                    <p>成功导入: <span style="color: #4CAF50; font-weight: bold;">${successfulCount}</span> 个题库</p>
+                    <p>总计: ${totalCount} 个文件</p>
+                    ${successfulCount < totalCount ? 
+                        `<p style="color: #FF9800;">${totalCount - successfulCount} 个文件导入失败或格式无效</p>` : ''}
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #8a8aff;">题库列表</h4>
+                    <div style="max-height: 300px; overflow-y: auto;">
+            `;
+            
+            // 已导入的题库
+            const validBanks = importedBanks.filter(b => !b.error);
+            if (validBanks.length > 0) {
+                html += `
+                    <div style="margin-bottom: 15px;">
+                        <h5 style="color: #4CAF50;">✅ 可导入的题库</h5>
+                `;
+                
+                validBanks.forEach((bank, index) => {
+                    const answers = bank.answers || {};
+                    const totalQuestions = Object.keys(answers).length;
+                    const basicInfoCount = bank.basicInfoCount || 0;
+                    const validQuestions = Math.max(0, totalQuestions - basicInfoCount);
+                    
+                    html += `
+                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-weight: bold; font-size: 16px;">${bank.name}</span>
+                                <span style="background: rgba(76, 175, 80, 0.2); color: #4CAF50; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                    ${totalQuestions}题
+                                </span>
+                            </div>
+                            <div style="color: #aaa; font-size: 13px; margin-bottom: 5px;">
+                                ${bank.description || '暂无描述'}
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: #888;">
+                                <div>基础信息: ${basicInfoCount}题</div>
+                                <div>有效题目: ${validQuestions}题</div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 11px; color: #666;">
+                                来源: ${path.basename(bank.originalPath || '未知')}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            // 失败的导入
+            const failedBanks = importedBanks.filter(b => b.error);
+            if (failedBanks.length > 0) {
+                html += `
+                    <div style="margin-bottom: 15px;">
+                        <h5 style="color: #f44336;">❌ 导入失败</h5>
+                `;
+                
+                failedBanks.forEach((bank, index) => {
+                    html += `
+                        <div style="background: rgba(244, 67, 54, 0.1); padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #f44336;">
+                            <div style="color: #f44336; font-weight: bold; margin-bottom: 5px;">
+                                ${path.basename(bank.path || '未知文件')}
+                            </div>
+                            <div style="color: #FF9800; font-size: 13px;">
+                                ${bank.error}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            html += `
+                    </div>
+                </div>
+                
+                <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    <h5 style="color: #8a8aff; margin-bottom: 10px;">导入选项</h5>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="overwriteExisting" style="width: 18px; height: 18px;">
+                            <span>覆盖同名题库</span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="renameIfExists" checked style="width: 18px; height: 18px;">
+                            <span>重命名同名题库</span>
+                        </label>
+                    </div>
+                </div>
+            `;
+            
+            contentDiv.innerHTML = html;
+            
+            // 存储导入的题库数据（临时）
+            window._pendingImportBanks = validBanks;
+            
+            // 显示模态框
+            document.getElementById('importResultModal').style.display = 'flex';
+        }
+
+        // 确认导入
+        function confirmImportBanks() {
+            const pendingBanks = window._pendingImportBanks || [];
+            const overwriteExisting = document.getElementById('overwriteExisting').checked;
+            const renameIfExists = document.getElementById('renameIfExists').checked;
+            
+            let importedCount = 0;
+            let skippedCount = 0;
+            let renamedCount = 0;
+            let overwrittenCount = 0;
+            
+            pendingBanks.forEach(bank => {
+                let bankName = bank.name;
+                let finalName = bankName;
+                
+                // 检查是否已存在同名题库
+                if (questionBanks[bankName]) {
+                    if (overwriteExisting) {
+                        // 覆盖现有题库
+                        finalName = bankName;
+                        overwrittenCount++;
+                    } else if (renameIfExists) {
+                        // 重命名
+                        let newName = bankName;
+                        let counter = 1;
+                        while (questionBanks[newName]) {
+                            newName = `${bankName} (${counter})`;
+                            counter++;
+                        }
+                        finalName = newName;
+                        renamedCount++;
+                    } else {
+                        // 跳过
+                        log(`跳过已存在的题库: ${bankName}`, 'warning');
+                        skippedCount++;
+                        return;
+                    }
+                }
+                
+                // 保存题库
+                questionBanks[finalName] = {
+                    name: finalName,
+                    description: bank.description || '',
+                    basicInfoCount: bank.basicInfoCount || 2,
+                    startQuestionNum: bank.startQuestionNum || 3,
+                    answers: bank.answers || {}
+                };
+                
+                importedCount++;
+                log(`导入题库: ${finalName} (${Object.keys(bank.answers || {}).length}题)`, 'success');
+            });
+            
+            // 保存到本地存储
+            saveBanksToStorage();
+            
+            // 更新UI
+            updateBankSelect();
+            selectedBank = Object.keys(questionBanks)[Object.keys(questionBanks).length - 1]; // 选择最后一个导入的题库
+            document.getElementById('bankSelect').value = selectedBank;
+            updateBankPreview();
+            
+            // 显示导入摘要
+            let summary = `导入完成: ${importedCount}个题库`;
+            if (skippedCount > 0) summary += `, 跳过${skippedCount}个`;
+            if (renamedCount > 0) summary += `, 重命名${renamedCount}个`;
+            if (overwrittenCount > 0) summary += `, 覆盖${overwrittenCount}个`;
+            
+            log(summary, 'success');
+            showNotification('导入完成', summary, 'success');
+            
+            // 关闭模态框
+            document.getElementById('importResultModal').style.display = 'none';
+            delete window._pendingImportBanks;
+        }
+
+        // 显示通知函数
+        function showNotification(title, message, type = 'info') {
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? 'rgba(76, 175, 80, 0.9)' : 
+                            type === 'error' ? 'rgba(244, 67, 54, 0.9)' : 
+                            'rgba(33, 150, 243, 0.9)'};
+                color: white;
+                padding: 15px 20px;
+                border-radius: 8px;
+                z-index: 10000;
+                font-size: 14px;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                animation: slideInRight 0.3s ease, fadeOut 3s ease 2.7s;
+                max-width: 400px;
+                min-width: 300px;
+            `;
+            
+            notification.innerHTML = `
+                <div style="font-weight: bold; margin-bottom: 5px; font-size: 15px;">${title}</div>
+                <div style="font-size: 13px; opacity: 0.9;">${message}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // 3秒后移除
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        // 添加键盘快捷键监听（在setupEventListeners函数中添加）
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Shift+E 导出当前题库
+            if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+                e.preventDefault();
+                exportCurrentBank();
+            }
+            
+            // Ctrl+Shift+I 导入题库
+            if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+                e.preventDefault();
+                importBank();
+            }
+            
+            // Ctrl+Shift+B 批量导入
+            if (e.ctrlKey && e.shiftKey && e.key === 'B') {
+                e.preventDefault();
+                batchImportBanks();
+            }
+        });
         
         // 打开问卷页面
         async function openWjxPage() {

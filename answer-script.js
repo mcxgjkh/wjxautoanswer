@@ -1,5 +1,5 @@
 // ============================
-// V7.1.2 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
+// V7.2.2 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
 // ============================
 
 (function() {
@@ -10,9 +10,9 @@
     const accuracy = window.ElectronAccuracy || 1.0; // 正确率，默认100%
     const electronAnswers = window.ElectronAnswers || {};
     const electronBasicInfoCount = window.ElectronBasicInfoCount || 2; // 基础信息填写题数，默认2题
-    console.log('V7.1.2 - 来自Electron的配置:', electronConfig);
-    console.log('V7.1.2 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
-    console.log('V7.1.2 - 基础信息填写题数:', electronBasicInfoCount);
+    console.log('V7.2.2 - 来自Electron的配置:', electronConfig);
+    console.log('V7.2.2 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
+    console.log('V7.2.2 - 基础信息填写题数:', electronBasicInfoCount);
     
     // ==================== 速度配置 ====================
     const SPEED_OPTIONS = [
@@ -175,7 +175,7 @@
         statusBar.className = 'electron-status-bar';
         statusBar.innerHTML = `
             <div class="left">
-                <div class="title">问卷星自动答题器 V7.1.2</div>
+                <div class="title">问卷星自动答题器 V7.2.2</div>
                 <div class="status" id="statusText">准备中...</div>
                 <div class="accuracy-info">正确率: <span class="accuracy-value">${(accuracy * 100).toFixed(0)}%</span></div>
                 <div class="basic-info-count">基础信息: ${electronBasicInfoCount}题</div>
@@ -237,7 +237,7 @@
         }
     }
     
-    // ==================== 答题机器人 V7.1.2 ====================
+    // ==================== 答题机器人 V7.2.2 ====================
     class AnswerBot {
         constructor(speedOption, accuracy, basicInfoCount) {
             this.speedOption = speedOption;
@@ -254,7 +254,7 @@
             this.allQuestions = []; // 所有题目
             this.answerableQuestions = []; // 可答题的题目（排除基础信息题）
             
-            console.log(`V7.1.2 - 初始化答题机器人`);
+            console.log(`V7.2.2 - 初始化答题机器人`);
             console.log(`  速度模式: ${speedOption.name}`);
             console.log(`  目标正确率: ${(accuracy * 100).toFixed(0)}%`);
             console.log(`  基础信息题数: ${basicInfoCount}`);
@@ -566,7 +566,7 @@
             // 计算需要正确的题目数量（采用去一法，保证实际正确率 >= 设置正确率）
             const targetCorrectCount = Math.ceil(totalAnswerable * this.accuracy);
             
-            console.log(`V7.1.2 - 正确率计算:`);
+            console.log(`V7.2.2 - 正确率计算:`);
             console.log(`  有效题目数: ${totalAnswerable}题`);
             console.log(`  设定正确率: ${(this.accuracy * 100).toFixed(0)}%`);
             console.log(`  需要正确题数: ceil(${totalAnswerable} × ${this.accuracy}) = ${targetCorrectCount}题`);
@@ -637,7 +637,7 @@
             
             // 计算实际正确率
             const actualAccuracy = this.correctCount / totalAnswerable;
-            console.log(`V7.1.2 - 答题完成:`);
+            console.log(`V7.2.2 - 答题完成:`);
             console.log(`  总共答题: ${this.completedCount}题`);
             console.log(`  正确答题: ${this.correctCount}题`);
             console.log(`  错误答题: ${this.errorQuestions.length}题`);
@@ -681,7 +681,7 @@
             
             // 确认对话框
             const confirmed = confirm(
-                `V7.1.2 - 答题完成！\n\n` +
+                `V7.2.2 - 答题完成！\n\n` +
                 `题库统计:\n` +
                 `  总题目: ${this.allQuestions.length}题\n` +
                 `  基础信息: ${this.basicInfoCount}题\n` +
@@ -756,7 +756,7 @@
             return;
         }
         
-        console.log('V7.1.2 - 启动自动答题...');
+        console.log('V7.2.2 - 启动自动答题...');
         console.log(`运行在Electron中，速度: ${selectedSpeed.name}, 正确率: ${(accuracy * 100).toFixed(0)}%`);
         
         // 更新状态
@@ -774,7 +774,7 @@
     
     // ==================== 初始化 ====================
     function init() {
-        console.log('答题脚本 V7.1.2 已加载');
+        console.log('答题脚本 V7.2.2 已加载');
         console.log('正在初始化...');
         
         // 检查是否有答案数据
@@ -849,6 +849,6 @@
         setTimeout(init, 100);
     }
     
-    console.log('Electron版答题脚本 V7.1.2 初始化完成');
+    console.log('Electron版答题脚本 V7.2.2 初始化完成');
     
 })();
