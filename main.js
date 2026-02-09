@@ -21,7 +21,7 @@ function createMainWindow() {
             webSecurity: false,
             devTools: true
         },
-        title: '问卷星自动答题器 V7.2.2 - 题库管理版',
+        title: '问卷星自动答题器 V7.2.3 - 题库管理版',
         show: false
     });
 
@@ -98,7 +98,7 @@ function createWjxWindow(config) {
     
     // 构建问卷URL
     const wjxUrl = `https://ks.wjx.com/vm/${config.urlSuffix}`;
-    console.log('V7.2.2 - 加载问卷页面:', wjxUrl);
+    console.log('V7.2.3 - 加载问卷页面:', wjxUrl);
     
     wjxWindow.loadURL(wjxUrl);
     
@@ -135,7 +135,7 @@ function createWjxWindow(config) {
             
             // 创建注入脚本
             const injectScript = `
-                // 注入配置 V7.2.2
+                // 注入配置 V7.2.3
                 window.ElectronSpeedConfig = ${JSON.stringify(config.speedConfig)};
                 window.ElectronAccuracy = ${config.accuracy / 100};
                 window.ElectronAnswers = ${JSON.stringify(config.answers || {})};
@@ -231,7 +231,7 @@ app.on('window-all-closed', () => {
 
 // IPC通信处理
 ipcMain.handle('open-wjx', async (event, config) => {
-    console.log('V7.2.2 - 打开问卷页面，配置:', {
+    console.log('V7.2.3 - 打开问卷页面，配置:', {
         speed: config.speedConfig.name,
         accuracy: config.accuracy,
         urlSuffix: config.urlSuffix,
