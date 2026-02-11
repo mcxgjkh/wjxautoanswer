@@ -9,7 +9,7 @@ const BUILD_CONFIGS = {
     // 标准版配置
     standard: {
         outputDir: 'dist',
-        productName: '问卷星自动答题器 V7.4.1',
+        productName: '问卷星自动答题器 V8.0.1',
         icon: 'icon.ico',
         targets: {
             win: 'nsis',
@@ -21,7 +21,7 @@ const BUILD_CONFIGS = {
             allowToChangeInstallationDirectory: true,
             createDesktopShortcut: true,
             createStartMenuShortcut: true,
-            shortcutName: '问卷星答题器 V7.4.1',
+            shortcutName: '问卷星答题器 V8.0.1',
             license: 'LICENSE'
         },
         extraResources: [
@@ -43,7 +43,7 @@ const BUILD_CONFIGS = {
     // 便携版配置
     portable: {
         outputDir: 'build',
-        productName: '问卷星自动答题器 V7.4.1 (便携版)',
+        productName: '问卷星自动答题器 V8.0.1 (便携版)',
         icon: 'icon.ico',
         targets: {
             win: 'portable',
@@ -129,7 +129,7 @@ function updatePackageJsonBuildConfig(buildType = 'standard') {
 function createPortableFlag() {
     const flagContent = `便携版标志文件
 生成时间: ${new Date().toISOString()}
-版本: 7.4.1
+版本: 8.0.1
 模式: 便携版（绿色版）
 说明: 此文件表示这是一个便携版应用程序，所有数据将保存在程序目录中。
 
@@ -162,7 +162,7 @@ function createBuildStructure(buildType) {
     
     // 创建版本信息文件
     const versionInfo = {
-        version: '7.4.1',
+        version: '8.0.1',
         buildType: buildType,
         buildDate: new Date().toISOString(),
         author: 'MCXGJKH',

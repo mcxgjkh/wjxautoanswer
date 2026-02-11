@@ -21,7 +21,7 @@ function createMainWindow() {
             webSecurity: false,
             devTools: true
         },
-        title: '问卷星自动答题器 V7.4.1 - 题库管理版',
+        title: '问卷星自动答题器 V8.0.1 - 题库管理版',
         show: false
     });
 
@@ -98,7 +98,7 @@ function createWjxWindow(config) {
     
     // 构建问卷URL
     const wjxUrl = `https://ks.wjx.com/vm/${config.urlSuffix}`;
-    console.log('V7.4.1 - 加载问卷页面:', wjxUrl);
+    console.log('V8.0.1 - 加载问卷页面:', wjxUrl);
     
     wjxWindow.loadURL(wjxUrl);
     
@@ -133,13 +133,18 @@ function createWjxWindow(config) {
             const fs = require('fs');
             const answerScript = fs.readFileSync(path.join(__dirname, 'answer-script.js'), 'utf-8');
             
-            // 创建注入脚本
+            // 创建注入脚本 - 添加题目匹配配置
             const injectScript = `
-                // 注入配置 V7.4.1
+                // 注入配置 V8.0.1
                 window.ElectronSpeedConfig = ${JSON.stringify(config.speedConfig)};
                 window.ElectronAccuracy = ${config.accuracy / 100};
                 window.ElectronAnswers = ${JSON.stringify(config.answers || {})};
                 window.ElectronBasicInfoCount = ${config.basicInfoCount || 2};
+                
+                // ========== 题目匹配配置注入（V8.0.1新增）==========
+                window.ElectronMatchEnabled = ${config.matchEnabled === true};
+                window.ElectronMatchBank = ${JSON.stringify(config.matchBank || null)};
+                // ========== 题目匹配配置注入结束 ==========
                 
                 // 注入jQuery（如果页面没有）
                 if (typeof jQuery === 'undefined') {
@@ -148,11 +153,16 @@ function createWjxWindow(config) {
                     script.onload = function() {
                         // 注入答题脚本
                         ${answerScript}
+                        // 脚本加载完成后输出调试信息
+                        console.log('答题脚本已加载，matchEnabled:', window.ElectronMatchEnabled);
+                        console.log('matchBank:', window.ElectronMatchBank);
                     };
                     document.head.appendChild(script);
                 } else {
                     // 直接注入答题脚本
                     ${answerScript}
+                    console.log('答题脚本已加载，matchEnabled:', window.ElectronMatchEnabled);
+                    console.log('matchBank:', window.ElectronMatchBank);
                 }
             `;
             
@@ -165,6 +175,10 @@ function createWjxWindow(config) {
             }
             
             console.log('答题脚本注入成功');
+            console.log('  题目匹配启用:', config.matchEnabled);
+            if (config.matchBank) {
+                console.log('  题目匹配库:', config.matchBank.name);
+            }
             
         } catch (error) {
             console.error('注入脚本失败:', error);
@@ -231,7 +245,7 @@ app.on('window-all-closed', () => {
 
 // IPC通信处理
 ipcMain.handle('open-wjx', async (event, config) => {
-    console.log('V7.4.1 - 打开问卷页面，配置:', {
+    console.log('V8.0.1 - 打开问卷页面，配置:', {
         speed: config.speedConfig.name,
         accuracy: config.accuracy,
         urlSuffix: config.urlSuffix,
