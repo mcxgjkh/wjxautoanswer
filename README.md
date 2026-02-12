@@ -51,6 +51,8 @@
 
 - [Node.js](https://nodejs.org/) **16.0 或更高版本**  
 - npm（通常随Node.js一起安装）  
+- electron  
+- electron-builder  
 
 ### 获取源码
 
@@ -164,7 +166,7 @@ Fork 本仓库
 
 # 更新日志
 
-所有对本项目的显著修改都将记录在此文件中。
+所有对本项目的显著修改都将记录在此文件中，更早的版本（7.4.1前）不被记录
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，  
 版本号遵循 [语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。
@@ -209,9 +211,6 @@ Fork 本仓库
 
 - **模态框关闭**  
   - 删除重复的 `matchBankInfoModal` 定义，修复点“✕”无法关闭的问题  
-
-- **新建题库默认值**  
-  - 基础信息题数默认显示 `2`，起始编号默认显示 `3`（与主题库一致）  
 
 ### 🎨 优化
 
