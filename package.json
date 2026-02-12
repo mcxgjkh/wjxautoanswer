@@ -1,7 +1,7 @@
 {
   "name": "wjx-auto-answer",
-  "version": "8.0.1",
-  "description": "问卷星自动答题器 V8.0.1 - Design By MCXGJKH",
+  "version": "8.0.2",
+  "description": "问卷星自动答题器 V8.0.2 - Design By MCXGJKH",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -29,7 +29,7 @@
   },
   "build": {
     "appId": "com.mcxgjkh.wjxautoanswer",
-    "productName": "问卷星自动答题器WJXAA_V8.0.1",
+    "productName": "问卷星自动答题器WJXAA_V8.0.2",
     "copyright": "Copyright © 2026 MCXGJKH",
     "directories": {
       "output": "dist"

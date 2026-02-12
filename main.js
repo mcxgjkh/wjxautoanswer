@@ -21,7 +21,7 @@ function createMainWindow() {
             webSecurity: false,
             devTools: true
         },
-        title: '问卷星自动答题器 V8.0.1 - 题库管理版',
+        title: '问卷星自动答题器 V8.0.2 - 题库管理版',
         show: false
     });
 
@@ -98,7 +98,7 @@ function createWjxWindow(config) {
     
     // 构建问卷URL
     const wjxUrl = `https://ks.wjx.com/vm/${config.urlSuffix}`;
-    console.log('V8.0.1 - 加载问卷页面:', wjxUrl);
+    console.log('V8.0.2 - 加载问卷页面:', wjxUrl);
     
     wjxWindow.loadURL(wjxUrl);
     
@@ -135,13 +135,13 @@ function createWjxWindow(config) {
             
             // 创建注入脚本 - 添加题目匹配配置
             const injectScript = `
-                // 注入配置 V8.0.1
+                // 注入配置 V8.0.2
                 window.ElectronSpeedConfig = ${JSON.stringify(config.speedConfig)};
                 window.ElectronAccuracy = ${config.accuracy / 100};
                 window.ElectronAnswers = ${JSON.stringify(config.answers || {})};
                 window.ElectronBasicInfoCount = ${config.basicInfoCount || 2};
                 
-                // ========== 题目匹配配置注入（V8.0.1新增）==========
+                // ========== 题目匹配配置注入（V8.0.2新增）==========
                 window.ElectronMatchEnabled = ${config.matchEnabled === true};
                 window.ElectronMatchBank = ${JSON.stringify(config.matchBank || null)};
                 // ========== 题目匹配配置注入结束 ==========
@@ -245,7 +245,7 @@ app.on('window-all-closed', () => {
 
 // IPC通信处理
 ipcMain.handle('open-wjx', async (event, config) => {
-    console.log('V8.0.1 - 打开问卷页面，配置:', {
+    console.log('V8.0.2 - 打开问卷页面，配置:', {
         speed: config.speedConfig.name,
         accuracy: config.accuracy,
         urlSuffix: config.urlSuffix,

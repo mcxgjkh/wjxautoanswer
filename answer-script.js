@@ -1,5 +1,5 @@
 // ============================
-// V8.0.1 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
+// V8.0.2 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
 // 新增图片URL匹配功能
 // ============================
 
@@ -12,12 +12,12 @@
     const electronAnswers = window.ElectronAnswers || {};
     const electronBasicInfoCount = window.ElectronBasicInfoCount || 2; // 基础信息填写题数，默认2题
     
-    // ==================== 题目匹配配置（V8.0.1新增）====================
+    // ==================== 题目匹配配置（V8.0.2新增）====================
     const matchEnabled = window.ElectronMatchEnabled || false;
     const matchBank = window.ElectronMatchBank || null;
 
-    console.log('V8.0.1 - 题目匹配功能:', matchEnabled ? '启用' : '禁用');
-    console.log('V8.0.1 - 收到的原始配置:');
+    console.log('V8.0.2 - 题目匹配功能:', matchEnabled ? '启用' : '禁用');
+    console.log('V8.0.2 - 收到的原始配置:');
     console.log('  ElectronMatchEnabled:', window.ElectronMatchEnabled);
     console.log('  ElectronMatchBank:', window.ElectronMatchBank);
 
@@ -39,9 +39,9 @@
     }
     // ==================== 题目匹配配置结束 ====================
     
-    console.log('V8.0.1 - 来自Electron的配置:', electronConfig);
-    console.log('V8.0.1 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
-    console.log('V8.0.1 - 基础信息填写题数:', electronBasicInfoCount);
+    console.log('V8.0.2 - 来自Electron的配置:', electronConfig);
+    console.log('V8.0.2 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
+    console.log('V8.0.2 - 基础信息填写题数:', electronBasicInfoCount);
     
     // ==================== 速度配置 ====================
     const SPEED_OPTIONS = [
@@ -288,7 +288,7 @@
         statusBar.className = 'electron-status-bar';
         statusBar.innerHTML = `
             <div class="left">
-                <div class="title">问卷星自动答题器 V8.0.1</div>
+                <div class="title">问卷星自动答题器 V8.0.2</div>
                 <div class="status" id="statusText">准备中...</div>
                 <div class="accuracy-info">正确率: <span class="accuracy-value">${(accuracy * 100).toFixed(0)}%</span></div>
                 <div class="basic-info-count">基础信息: ${electronBasicInfoCount}题</div>
@@ -340,7 +340,7 @@
         }
     }
     
-    // ==================== 答题机器人 V8.0.1（增强版） ====================
+    // ==================== 答题机器人 V8.0.2（增强版） ====================
     class AnswerBot {
         constructor(speedOption, accuracy, basicInfoCount, matchEnabled, matchBank) {
             this.speedOption = speedOption;
@@ -361,7 +361,7 @@
             this.matchEnabled = matchEnabled === true;
             this.matchBank = matchBank || { answers: {}, basicInfoCount: 2, startQuestionNum: 3 };
             
-            console.log(`V8.0.1 - 初始化答题机器人（支持图片URL匹配）`);
+            console.log(`V8.0.2 - 初始化答题机器人（支持图片URL匹配）`);
             console.log(`  速度模式: ${speedOption.name}`);
             console.log(`  目标正确率: ${(accuracy * 100).toFixed(0)}%`);
             console.log(`  基础信息题数: ${basicInfoCount}`);
@@ -580,7 +580,7 @@
                 return 'image_matched';
             }
 
-            // ===== 第二步：题目文本匹配（V8.0.1新增）- 优先执行 =====
+            // ===== 第二步：题目文本匹配（V8.0.2新增）- 优先执行 =====
             if (this.matchEnabled) {
                 console.log(`  尝试题目文本匹配...`);
                 const matchedQuestionNum = this.matchQuestionText(questionElement, questionNum);
@@ -780,7 +780,7 @@
                 return 0;
             }
             const targetCorrectCount = Math.ceil(totalAnswerable * this.accuracy);
-            console.log(`V8.0.1 - 正确率计算:`);
+            console.log(`V8.0.2 - 正确率计算:`);
             console.log(`  有效题目数: ${totalAnswerable}题`);
             console.log(`  设定正确率: ${(this.accuracy * 100).toFixed(0)}%`);
             console.log(`  需要正确题数: ceil(${totalAnswerable} × ${this.accuracy}) = ${targetCorrectCount}题`);
@@ -832,7 +832,7 @@
             }
             
             const actualAccuracy = this.correctCount / totalAnswerable;
-            console.log(`V8.0.1 - 答题完成:`);
+            console.log(`V8.0.2 - 答题完成:`);
             console.log(`  总共答题: ${this.completedCount}题`);
             console.log(`  正确答题: ${this.correctCount}题`);
             console.log(`  错误答题: ${this.errorQuestions.length}题`);
@@ -862,7 +862,7 @@
             const targetAccuracy = (this.accuracy * 100).toFixed(0);
             const actualAccuracyPercent = (actualAccuracy * 100).toFixed(1);
             const confirmed = confirm(
-                `V8.0.1 - 答题完成！\n\n` +
+                `V8.0.2 - 答题完成！\n\n` +
                 `题库统计:\n` +
                 `  总题目: ${this.allQuestions.length}题\n` +
                 `  基础信息: ${this.basicInfoCount}题\n` +
@@ -921,7 +921,7 @@
             console.log('答题正在进行中...');
             return;
         }
-        console.log('V8.0.1 - 启动自动答题...');
+        console.log('V8.0.2 - 启动自动答题...');
         console.log(`运行在Electron中，速度: ${selectedSpeed.name}, 正确率: ${(accuracy * 100).toFixed(0)}%`);
         isRunning = true;
         updateStatus('正在启动...', 0);
@@ -935,7 +935,7 @@
     
     // ==================== 初始化 ====================
     function init() {
-        console.log('答题脚本 V8.0.1 已加载');
+        console.log('答题脚本 V8.0.2 已加载');
         console.log('正在初始化...');
         const answerKeys = Object.keys(ANSWERS);
         if (answerKeys.length === 0) {
@@ -987,6 +987,6 @@
         setTimeout(init, 100);
     }
     
-    console.log('Electron版答题脚本 V8.0.1 初始化完成，支持图片URL匹配');
+    console.log('Electron版答题脚本 V8.0.2 初始化完成，支持图片URL匹配');
     
 })();

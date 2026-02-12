@@ -1,7 +1,13 @@
 # 问卷星自动答题器
 
-![版本](https://img.shields.io/badge/版本-8.0.1-blue)
+![版本](https://img.shields.io/badge/版本-8.0.2-blue)
 ![许可证](https://img.shields.io/badge/许可证-AGPLv3-green)
+![构建](https://img.shields.io/badge/构建-passing-brightgreen)
+![Electron](https://img.shields.io/badge/Electron-28.0.0-blue)
+![Node](https://img.shields.io/badge/Node-16+-green)
+![平台](https://img.shields.io/badge/平台-Windows%20|%20macOS%20|%20Linux-lightgrey)*（MacOS与Linux请自行修改package.json编译）*
+![最后提交](https://img.shields.io/badge/最后提交-2026--02--12-orange)
+![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
 **问卷星自动答题器** 是一款基于 Electron 的跨平台桌面应用程序，专为问卷星平台（也兼容其他的）设计，提供智能题库管理、题目文本匹配、图片URL识别、正确率控制及多档速度调节等功能。本项目仅用于学习研究，请勿用于非法用途。
 
@@ -173,6 +179,20 @@ Fork 本仓库
 
 ---
 
+## [8.0.2] - 2026-02-12
+
+### 🔧 修复
+
+- **链接名称显示**
+  - 修复了默认链接不显示链接名的问题
+
+### 🎨 优化
+
+- **统一按钮**  
+  - 优化了按钮样式
+
+---
+
 ## [8.0.1] - 2026-02-12
 
 ### ✨ 新增
@@ -259,3 +279,4 @@ Fork 本仓库
 ---
 
 [8.0.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.0.1
+[8.0.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.0.2

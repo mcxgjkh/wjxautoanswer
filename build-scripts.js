@@ -174,7 +174,7 @@ function main() {
         case 'help':
         default:
             console.log(`
-问卷星自动答题器 V8.0.1 构建脚本
+问卷星自动答题器 V8.0.2 构建脚本
 
 使用方法:
   node build-scripts.js [command]
@@ -195,7 +195,7 @@ function main() {
   标准版: dist/ 目录 (安装程序)
   便携版: build/ 目录 (单个可执行文件)
 
-版本信息: V8.0.1 | Design By MCXGJKH | AGPL-3.0 License
+版本信息: V8.0.2 | Design By MCXGJKH | AGPL-3.0 License
             `);
             break;
     }
