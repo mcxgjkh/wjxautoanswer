@@ -179,6 +179,14 @@ Fork 本仓库
 
 ---
 
+## [8.0.3] - 2026-03-06
+
+### 🔧 修复
+
+- **修复了一大堆bug**
+
+---
+
 ## [8.0.2] - 2026-02-12
 
 ### 🔧 修复
@@ -280,3 +288,4 @@ Fork 本仓库
 
 [8.0.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.0.1
 [8.0.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.0.2
+[8.0.3]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.0.3

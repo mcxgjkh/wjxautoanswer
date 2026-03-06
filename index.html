@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>问卷星自动答题器 V8.0.2</title>
+    <title>问卷星自动答题器 V8.0.3</title>
     <style>
         /* 美化滚动条样式 */
         ::-webkit-scrollbar {
@@ -96,6 +96,7 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
             padding: 25px;
+            min-width: 0;  
         }
         
         .config-section h2 {
@@ -317,6 +318,8 @@
             display: flex;
             gap: 15px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;     
         }
         .bank-select {
             flex: 1;
@@ -326,6 +329,8 @@
             border-radius: 8px;
             color: white;
             font-size: 14px;
+            max-width: calc(100%); 
+            min-width: 160px; 
         }
         .bank-select option {
             background: #1a1a2e;
@@ -334,6 +339,8 @@
         .bank-buttons {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap; 
+            justify-content: flex-end;
         }
         .bank-btn {
             width: 42px;
@@ -395,10 +402,11 @@
             background: rgba(0, 0, 0, 0.2);
             border-radius: 8px;
             padding: 15px;
-            max-height: 200px;
+            max-height: 250px;
             overflow-y: auto;
             margin-top: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            word-break: break-word; 
         }
         .bank-header {
             display: flex;
@@ -770,6 +778,56 @@
             padding: 8px 12px;
             border-radius: 6px;
         }
+
+        /* 带行号的编辑器容器 */
+        .line-number-editor {
+            display: flex;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            min-height: 200px;
+            max-height: 400px;
+        }
+
+        .line-numbers {
+            width: 40px;
+            padding: 15px 5px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #8a8aff;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            text-align: right;
+            user-select: none;
+            overflow: hidden;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .line-number-editor textarea {
+            flex: 1;
+            padding: 15px;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+            overflow-y: auto;
+        }
+
+        .line-number-editor textarea:focus {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .editor-container-basic .line-number-editor {
+            min-height: auto;
+            max-height: 200px;
+        }
         /* ========== 题目匹配独立样式结束 ========== */
         
         @media (max-width: 1024px) {
@@ -803,7 +861,7 @@
     <div class="container">
         <div class="header">
             <h1>问卷星自动答题器</h1>
-            <div class="subtitle">V8.0.2 智能识别 | 题库管理版</div>
+            <div class="subtitle">V8.0.3 智能识别 | 题库管理版</div>
             <div class="version">Design By MCXGJKH</div>
         </div>
         
@@ -817,13 +875,13 @@
                         <span style="color: #8a8aff; font-size: 12px; margin-left: auto;">链接历史: <span id="historyCount">0</span> 条</span>
                     </div>
                     <div class="url-input-field">
-                        <input type="text" id="urlSuffix" placeholder="wRSroLM.aspx" value="wRSroLM.aspx">
+                        <input type="text" id="urlSuffix" placeholder="todc4b3" value="todc4b3.aspx">
                         <button class="history-btn" id="historyBtn" title="管理链接历史">
                             <span>📋 历史</span>
                         </button>
                     </div>
                     <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                        当前链接标题: <span id="currentUrlTitle">理化生模拟-化学</span>
+                        当前链接标题: <span id="currentUrlTitle">光谷实验理化生模拟-化学</span>
                     </div>
                 </div>
                 
@@ -845,6 +903,11 @@
                         有效题目数 = 总题目数 - 基础信息填写题数<br>
                         实际正确率 ≥ 设定正确率
                     </div>
+                </div>
+
+                <h2 style="margin-top: 30px;">⚡ 速度选择</h2>
+                <div class="speed-options" id="speedOptions">
+                    <!-- 速度选项由JS动态生成 -->
                 </div>
             </div>
 
@@ -1033,10 +1096,6 @@
                     </div>
                 </div>
                 
-                <h2 style="margin-top: 30px;">⚡ 速度选择</h2>
-                <div class="speed-options" id="speedOptions">
-                    <!-- 速度选项由JS动态生成 -->
-                </div>
             </div>
         </div>
         
@@ -1044,7 +1103,7 @@
             <h3 style="color: #8a8aff; margin-bottom: 15px; font-size: 20px;">使用说明</h3>
             <div style="color: #ccc; line-height: 1.6;">
                 <ul style="padding-left: 20px; margin: 10px 0;">
-                    <li>1. 输入问卷链接后缀 (如: wRSroLM.aspx) 或从历史记录中选择</li>
+                    <li>1. 输入问卷链接后缀 (如: todc4b3) 或从历史记录中选择</li>
                     <li>2. 选择或创建题库 (支持最多1000条题目，每100行自动扩展)</li>
                     <li>3. 设置正确率 (0-100%，采用去一法保证实际正确率≥设定值)</li>
                     <li>4. 选择答题速度</li>
@@ -1081,7 +1140,7 @@
         </div>
         
         <div class="footer">
-            © 2026 MCXGJKH | 问卷星自动答题器 V8.0.2
+            © 2026 MCXGJKH | 问卷星自动答题器 V8.0.3
         </div>
     </div>
 
@@ -1100,32 +1159,39 @@
                         <input type="number" class="info-input" id="basicInfoCount" placeholder="基础信息填写题数" value="2" min="0" max="20">
                         <input type="number" class="info-input" id="startQuestionNum" placeholder="起始题目编号" value="3" min="1" max="1000">
                     </div>
-                    <div class="editor-container-basic" id="basicInfoContainer" style="display: none; margin-bottom: 10px;">
+                    <div class="editor-container-basic" id="basicInfoContainer" style="display: none;">
                         <div class="editor-header">
                             <span>基础信息答案 (每行一个)</span>
                         </div>
-                        <textarea id="basicInfoTextarea" placeholder="请输入基础信息答案，每行一个：
-例如：
-朱一龙
-901
+                        <div class="line-number-editor">
+                            <div class="line-numbers" id="basicInfoLineNumbers">1</div>
+                            <textarea id="basicInfoTextarea" placeholder="请输入基础信息答案，每行一个：
+    例如：
+    朱一龙
+    901
 
-程序会自动将答案格式化为：['答案1'], ['答案2']" style="width: 100%;"></textarea>
+    程序会自动将答案格式化为：['答案1'], ['答案2']" style="width: 100%;"></textarea>
+                        </div>
                     </div>
+                    <!-- 题目答案编辑器 -->
                     <div class="editor-container" style="margin-top: 10px;">
                         <div class="editor-header">
                             <span>题目答案 (每行一个答案，程序会自动格式化为数组)</span>
                             <span id="currentLineCount">0 行</span>
                         </div>
-                        <textarea id="bankContentTextarea" placeholder="请输入题目答案，每行一个答案：
-例如：
-提纯后所得精盐未完全干燥
-蒸发皿
-有气泡产生
+                        <div class="line-number-editor">
+                            <div class="line-numbers" id="bankLineNumbers">1</div>
+                            <textarea id="bankContentTextarea" placeholder="请输入题目答案，每行一个答案：
+    例如：
+    提纯后所得精盐未完全干燥
+    蒸发皿
+    有气泡产生
 
-程序会自动将答案格式化为：['答案1', '答案2', '答案3']
-并自动添加常见的字母选项格式如：['答案1', 'A 答案1']
+    程序会自动将答案格式化为：['答案1', '答案2', '答案3']
+    并自动添加常见的字母选项格式如：['答案1', 'A 答案1']
 
-系统支持最多1000行，每100行自动扩展文本框"></textarea>
+    系统支持最多1000行，每100行自动扩展文本框"></textarea>
+                        </div>
                     </div>
                     <div class="editor-info">
                         <span id="maxLinesInfo">最大支持: 100 行</span>
@@ -1281,30 +1347,36 @@
                     </div>
                     
                     <!-- 基础信息答案编辑框（与主题库行为一致，输入基础信息题数后自动显示/隐藏） -->
-                    <div class="editor-container-basic" id="matchBasicInfoContainer" style="display: none; margin-bottom: 10px;">
+                    <div class="editor-container-basic" id="matchBasicInfoContainer" style="display: none;">
                         <div class="editor-header">
                             <span>基础信息答案 (每行一个)</span>
                         </div>
-                        <textarea id="matchBasicInfoTextarea" placeholder="请输入基础信息答案，每行一个：
-    例如：
-    张三
-    202501
+                        <div class="line-number-editor">
+                            <div class="line-numbers" id="matchBasicInfoLineNumbers">1</div>
+                            <textarea id="matchBasicInfoTextarea" placeholder="请输入基础信息答案，每行一个：
+        例如：
+        张三
+        202501
 
-    程序会自动将答案格式化为：['答案1'], ['答案2']（注意：题目匹配库只存储题目，不存储答案，此处仅为占位/记录）" style="width: 100%;"></textarea>
+        程序会自动将答案格式化为：['答案1'], ['答案2']（注意：题目匹配库只存储题目，不存储答案，此处仅为占位/记录）" style="width: 100%;"></textarea>
+                        </div>
                     </div>
                     
                     <!-- 题目库：每行一个题目文本 -->
                     <div class="editor-container" style="margin-top: 10px;">
                         <div class="editor-header">
-                            <span>📋 题目库（每行一个题目文本，程序自动按起始编号生成题号）</span>
+                            <span>📋 题目库（每行一个题目文本）</span>
                             <span id="matchCurrentLineCount">0 行</span>
                         </div>
-                        <textarea id="matchBankContentTextarea" rows="12" placeholder="示例：
-    下列仪器中，不能用于加热的是？
-    实验室制取二氧化碳的药品是？
-    铁丝在氧气中燃烧的现象？
+                        <div class="line-number-editor">
+                            <div class="line-numbers" id="matchBankLineNumbers">1</div>
+                            <textarea id="matchBankContentTextarea" rows="12" placeholder="示例：
+        下列仪器中，不能用于加热的是？
+        实验室制取二氧化碳的药品是？
+        铁丝在氧气中燃烧的现象？
 
-    程序将自动为每行分配一个题号（从起始编号开始递增）。匹配时将使用这些题目文本定位题号，答案请从主题库获取。"></textarea>
+        程序将自动为每行分配一个题号（从起始编号开始递增）。匹配时将使用这些题目文本定位题号，答案请从主题库获取。"></textarea>
+                        </div>
                     </div>
                     
                     <div class="editor-info">
@@ -1313,7 +1385,7 @@
                         剩余: <span id="matchRemainingLines">1000</span> 行
                     </div>
                     <div class="match-editor-tip">
-                        💡 提示：每行一个题目文本，不包含答案。答案请通过主题库提供，匹配时将根据题号从主题库获取正确答案。
+                        提示：每行一个题目文本，不包含答案。答案请通过主题库提供，匹配时将根据题号从主题库获取正确答案。
                     </div>
                 </div>
             </div>
@@ -1396,10 +1468,26 @@
         </div>
     </div>
 
+    <!-- ========== 通用消息提示模态框 ========== -->
+    <div class="modal" id="messageModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 id="messageModalTitle">提示</h3>
+                <button class="close-modal" id="closeMessageModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="messageModalContent" style="color: #ccc; text-align: center; font-size: 16px; line-height: 1.6;"></div>
+            </div>
+            <div class="modal-actions" style="justify-content: center;">
+                <button class="btn btn-open" id="closeMessageBtn" style="padding: 10px 30px;">确定</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // ==================== 原有速度配置 ====================
         const SPEED_OPTIONS = [
-            { name: '刘子轩速度', value: 'lightning', delay: 100, desc: '5秒完成所有题目' },
+            { name: '真的很快', value: 'lightning', delay: 100, desc: '5秒完成所有题目' },
             { name: '极速', value: 'turbo', delay: 200, desc: '10秒完成所有题目' },
             { name: '快速', value: 'fast', delay: 300, desc: '15秒完成所有题目' },
             { name: '标准', value: 'normal', delay: 500, desc: '25秒完成所有题目' },
@@ -1412,53 +1500,182 @@
         
         // ==================== 原有默认题库 ====================
         const DEFAULT_QUESTION_BANK = {
-            name: "2026理化生实验操作模拟考试-化学",
-            description: "汤逊湖初中模拟 | 基础信息填写题：2题",
-            basicInfoCount: 2,
-            startQuestionNum: 3,
-            answers: {
-                "1": ["朱一龙"],
-                "2": ["901"],
-                "3": ["锐器", "D 锐器"],
-                "4": ["蒸发皿", "D 蒸发皿"],
-                "5": ["完全注满玻璃管", "B 完全注满玻璃管"],
-                "6": ["有气泡产生", "C 有气泡产生"],
-                "7": ["与电源负极相连的玻璃管内产生汽泡的速率更快"],
-                "8": ["c中液面最高", "C c中液面最高"],
-                "9": ["烧杯内壁有水雾", "A 烧杯内壁有水雾"],
-                "10": ["1:2", "B 1:2"],
-                "11": ["木条燃烧得更旺", "D 木条燃烧得更旺"],
-                "12": ["电解器中加入的是蒸馏水", "A 电解器中加入的是蒸馏水"],
-                "13": ["集气瓶", "D 集气瓶"],
-                "14": ["镊子", "C 镊子"],
-                "15": ["导管口有气泡冒出", "A 导管口有气泡冒出"],
-                "16": ["石灰石和稀盐酸", "C 石灰石和稀盐酸"],
-                "17": ["将燃着的木条放在集气瓶口", "B 将燃着的木条放在集气瓶口"],
-                "18": ["二氧化碳能参与光合作用", "D 二氧化碳能参与光合作用"],
-                "19": ["二氧化碳能溶于水", "B 二氧化碳能溶于水"],
-                "20": ["①③", "A ①③"],
-                "21": ["图III中纸花变红", "C 图III中纸花变红"],
-                "22": ["二氧化碳能使澄清石灰水变浑浊", "C 二氧化碳能使澄清石灰水变浑浊"],
-                "23": ["C"],
-                "24": ["延展性", "C 延展性"],
-                "25": ["导电性", "B 导电性"],
-                "26": ["硬铝的硬度更大", "D 硬铝的硬度更大"],
-                "27": ["氢气", "C 氢气"],
-                "28": ["铁", "A 铁"],
-                "29": ["铜与氧气反应生成氧化铜", "B 铜与氧气反应生成氧化铜"],
-                "30": ["该实验说明金属活动性：银 ＞ 铜", "D 该实验说明金属活动性：银 ＞ 铜"],
-                "31": ["铜 ＞ 银", "A 铜 ＞ 银"],
-                "32": ["实验中溶液由蓝色变成浅绿色", "A 实验中溶液由蓝色变成浅绿色"],
-                "33": ["烧杯", "B 烧杯"],
-                "34": ["托盘天平", "C 托盘天平"],
-                "35": ["搅拌，加快粗盐溶解", "B 搅拌，加快粗盐溶解"],
-                "36": ["平视凹液面的最低处", "C 平视凹液面的最低处"],
-                "37": ["引流", "C 引流"],
-                "38": ["量筒", "B 量筒"],
-                "39": ["实验中滤纸发生破损", "D 实验中滤纸发生破损"],
-                "40": ["当蒸发皿中出现较多固体时停止加热", "B 当蒸发皿中出现较多固体时停止加热"],
-                "41": ["食盐和细沙", "A 食盐和细沙"],
-                "42": ["提纯后所得精盐未完全干燥", "D 提纯后所得精盐未完全干燥"]
+            "name": "2026光谷实验理化生实验操作模拟考试-化学",
+            "description": "光谷实验理化生模拟",
+            "basicInfoCount": 2,
+            "startQuestionNum": 3,
+            "answers": {
+                "1": [
+                "徐潇冉"
+                ],
+                "2": [
+                "935"
+                ],
+                "3": [
+                "导电性",
+                "A 导电性"
+                ],
+                "4": [
+                "铁",
+                "B 铁"
+                ],
+                "5": [
+                "https://pubnewfr.paperol.cn/348561847/17694306676CbnTb.png"
+                ],
+                "6": [
+                "电解器中加入的是蒸馏水",
+                "D 电解器中加入的是蒸馏水"
+                ],
+                "7": [
+                "集气瓶",
+                "D 集气瓶"
+                ],
+                "8": [
+                "镊子",
+                "D 镊子"
+                ],
+                "9": [
+                "导管口有气泡冒出",
+                "D 导管口有气泡冒出"
+                ],
+                "10": [
+                "石灰石和稀盐酸",
+                "D 石灰石和稀盐酸"
+                ],
+                "11": [
+                "将燃着的木条放在集气瓶口",
+                "D 将燃着的木条放在集气瓶口"
+                ],
+                "12": [
+                "二氧化碳能参与光合作用",
+                "D 二氧化碳能参与光合作用"
+                ],
+                "13": [
+                "二氧化碳能溶于水",
+                "D 二氧化碳能溶于水"
+                ],
+                "14": [
+                "①③",
+                "D ①③"
+                ],
+                "15": [
+                "图III中纸花变红",
+                "D 图III中纸花变红"
+                ],
+                "16": [
+                "提纯后所得精盐未完全干燥",
+                "D 提纯后所得精盐未完全干燥"
+                ],
+                "17": [
+                "铜与氧气反应生成氧化铜",
+                "D 铜与氧气反应生成氧化铜"
+                ],
+                "18": [
+                "该实验说明金属活动性：银 ＞ 铜",
+                "D 该实验说明金属活动性：银 ＞ 铜"
+                ],
+                "19": [
+                "铜 ＞ 银",
+                "D 铜 ＞ 银"
+                ],
+                "20": [
+                "烧杯",
+                "D 烧杯"
+                ],
+                "21": [
+                "托盘天平",
+                "D 托盘天平"
+                ],
+                "22": [
+                "搅拌，加快粗盐溶解",
+                "D 搅拌，加快粗盐溶解"
+                ],
+                "23": [
+                "平视凹液面的最低处",
+                "D 平视凹液面的最低处"
+                ],
+                "24": [
+                "引流",
+                "D 引流"
+                ],
+                "25": [
+                "量筒",
+                "D 量筒"
+                ],
+                "26": [
+                "实验中滤纸发生破损",
+                "D 实验中滤纸发生破损"
+                ],
+                "27": [
+                "当蒸发皿中出现较多固体时停止加热",
+                "D 当蒸发皿中出现较多固体时停止加热"
+                ],
+                "28": [
+                "食盐和细沙",
+                "D 食盐和细沙"
+                ],
+                "29": [
+                "完全注满玻璃管",
+                "D 完全注满玻璃管"
+                ],
+                "30": [
+                "锐器",
+                "D 锐器"
+                ],
+                "31": [
+                "蒸发皿",
+                "D 蒸发皿"
+                ],
+                "32": [
+                "有气泡产生",
+                "D 有气泡产生"
+                ],
+                "33": [
+                "与电源负极相连的玻璃管内产生气泡的速率更快",
+                "D 与电源负极相连的玻璃管内产生气泡的速率更快"
+                ],
+                "34": [
+                "c中液面最高",
+                "D c中液面最高"
+                ],
+                "35": [
+                "烧杯内壁有水雾",
+                "D 烧杯内壁有水雾"
+                ],
+                "36": [
+                "1:2",
+                "D 1:2"
+                ],
+                "37": [
+                "木条燃烧得更旺",
+                "D 木条燃烧得更旺"
+                ],
+                "38": [
+                "二氧化碳能使澄清石灰水变浑浊",
+                "D 二氧化碳能使澄清石灰水变浑浊"
+                ],
+                "39": [
+                "延展性",
+                "D 延展性"
+                ],
+                "40": [
+                "实验中溶液由蓝色变成浅绿色",
+                "D 实验中溶液由蓝色变成浅绿色"
+                ],
+                "41": [
+                "硬铝的硬度更大",
+                "D 硬铝的硬度更大"
+                ],
+                "42": [
+                "氢气",
+                "D 氢气"
+                ]
+            },
+            "exportInfo": {
+                "version": "V8.0.3",
+                "exportedAt": "2026-03-06T13:55:51.756Z",
+                "totalQuestions": 42,
+                "basicInfoCount": 2
             }
         };
         
@@ -1484,8 +1701,8 @@
             loadBanksFromStorage();
             loadUrlHistory();
 
-            const defaultUrl = "wRSroLM.aspx";
-            const defaultTitle = "理化生模拟-化学";
+            const defaultUrl = "todc4b3.aspx";
+            const defaultTitle = "光谷实验理化生模拟-化学";
             if (urlHistory.length === 0) {
                 addUrlToHistory(defaultUrl, defaultTitle);
                 log('已添加默认链接历史记录: ' + defaultTitle, 'info');
@@ -1501,7 +1718,7 @@
                     showShortcutNotification('F12: 打开/关闭开发者工具');
                 }
             });
-            log('程序初始化完成 V8.0.2', 'success');
+            log('程序初始化完成 V8.0.3', 'success');
         });
 
         // ==================== 原有辅助函数 ====================
@@ -1511,7 +1728,7 @@
                 const shortcutLog = document.createElement('div');
                 shortcutLog.className = 'log info';
                 shortcutLog.innerHTML = `
-                    <strong>V8.0.2 快捷键说明：</strong><br>
+                    <strong>V8.0.3 快捷键说明：</strong><br>
                     • <b>F12</b>: 打开/关闭开发者工具（如无效请检查系统设置）<br>
                     • <b>Ctrl+Shift+I</b>: 打开/关闭开发者工具（备用）<br>
                     • <b>F5/Ctrl+R</b>: 刷新当前页面<br>
@@ -1566,8 +1783,24 @@
             });
             setTimeout(() => { container.children[3].click(); }, 100);
         }
+
+        // 显示通用消息模态框
+        function showMessageModal(title, message) {
+            const modal = document.getElementById('messageModal');
+            document.getElementById('messageModalTitle').textContent = title;
+            document.getElementById('messageModalContent').textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        // 关闭消息模态框的事件绑定
+        document.getElementById('closeMessageModalBtn')?.addEventListener('click', () => {
+            document.getElementById('messageModal').style.display = 'none';
+        });
+        document.getElementById('closeMessageBtn')?.addEventListener('click', () => {
+            document.getElementById('messageModal').style.display = 'none';
+        });
         
-        // ==================== 原有事件监听器（完整保留）====================
+        // 事件监听器
         function setupEventListeners() {
             const accuracySlider = document.getElementById('accuracySlider');
             const accuracyValue = document.getElementById('accuracyValue');
@@ -1673,8 +1906,13 @@
                 for (let i = startNum; i <= Math.max(...questionNumbers); i++) {
                     if (answers[i] && answers[i].length > 0) questionText += answers[i][0] + '\n';
                 }
-                document.getElementById('basicInfoTextarea').value = basicInfoText.trim();
-                document.getElementById('bankContentTextarea').value = questionText.trim();
+                const basicInfoTa = document.getElementById('basicInfoTextarea');
+                basicInfoTa.value = basicInfoText.trim();
+                basicInfoTa.dispatchEvent(new Event('input'));
+
+                const bankContentTa = document.getElementById('bankContentTextarea');
+                bankContentTa.value = questionText.trim();
+                bankContentTa.dispatchEvent(new Event('input'));
                 updateLineCount();
                 document.getElementById('bankEditorModal').style.display = 'flex';
             });
@@ -1995,6 +2233,44 @@
             else if (diffDays < 7) return `${diffDays}天前`;
             else return date.toLocaleDateString('zh-CN');
         }
+
+        // 行号同步函数
+        function setupLineNumberEditor(textareaId, lineNumbersId) {
+            const textarea = document.getElementById(textareaId);
+            const lineNumbers = document.getElementById(lineNumbersId);
+            if (!textarea || !lineNumbers) return;
+
+            function updateLineNumbers() {
+                const lines = textarea.value.split('\n');
+                const lineCount = lines.length;
+                // 生成行号字符串：1\n2\n3...
+                const lineNumberText = Array.from({ length: lineCount }, (_, i) => i + 1).join('\n');
+                lineNumbers.textContent = lineNumberText || '1'; // 至少显示第一行
+            }
+
+            // 初始化
+            updateLineNumbers();
+
+            // 监听输入事件
+            textarea.addEventListener('input', updateLineNumbers);
+            
+            // 监听滚动，使行号与文本同步滚动（可选，但推荐）
+            textarea.addEventListener('scroll', () => {
+                lineNumbers.scrollTop = textarea.scrollTop;
+            });
+        }
+
+        // 在 DOMContentLoaded 或适当的时机调用
+        document.addEventListener('DOMContentLoaded', function() {
+            // 主题库编辑器
+            setupLineNumberEditor('basicInfoTextarea', 'basicInfoLineNumbers');
+            setupLineNumberEditor('bankContentTextarea', 'bankLineNumbers');
+            
+            // 题目匹配库编辑器
+            setupLineNumberEditor('matchBasicInfoTextarea', 'matchBasicInfoLineNumbers');
+            setupLineNumberEditor('matchBankContentTextarea', 'matchBankLineNumbers');
+            
+        });
         
         function updateBankSelect() {
             const bankSelect = document.getElementById('bankSelect');
@@ -2120,6 +2396,13 @@
             const questionContent = document.getElementById('bankContentTextarea').value.trim();
             if (!bankName) { log('错误: 题库名称不能为空', 'error'); return; }
             if (bankName === DEFAULT_QUESTION_BANK.name && !isEditingBank) { log('错误: 不能使用默认题库名称', 'error'); return; }
+            // 检查名称重复 
+            const isNameConflict = questionBanks[bankName] && (!isEditingBank || (isEditingBank && editingBankName !== bankName));
+            if (isNameConflict) {
+                showMessageModal('保存失败',`题库名称 "${bankName}" 已存在，请使用其他名称。`);
+                log(`保存失败：题库名称 "${bankName}" 已存在`, 'error');
+                return;
+            }
             const answers = {};
             if (basicInfoCount > 0 && basicInfoContent) {
                 const basicInfoLines = basicInfoContent.split('\n').filter(line => line.trim() !== '');
@@ -2174,7 +2457,7 @@
                     basicInfoCount: bank.basicInfoCount || 2,
                     startQuestionNum: bank.startQuestionNum || 3,
                     answers: bank.answers,
-                    exportInfo: { version: 'V8.0.2', exportedAt: new Date().toISOString(), totalQuestions, basicInfoCount: bank.basicInfoCount || 2 }
+                    exportInfo: { version: 'V8.0.3', exportedAt: new Date().toISOString(), totalQuestions, basicInfoCount: bank.basicInfoCount || 2 }
                 });
                 if (result.success) {
                     const sizeInKB = (result.size / 1024).toFixed(2);
@@ -2439,8 +2722,14 @@
         // ==================== 打开问卷页面（集成题目匹配配置）====================
         async function openWjxPage() {
             if (!selectedSpeed) { log('请先选择答题速度', 'warning'); return; }
-            const urlSuffix = document.getElementById('urlSuffix').value.trim();
-            if (!urlSuffix) { log('请填写问卷链接后缀', 'warning'); return; }
+            const originalSuffix = document.getElementById('urlSuffix').value.trim();
+            if (!originalSuffix) { log('请填写问卷链接后缀', 'warning'); return; }
+
+            // 自动补全 .aspx 后缀（如果缺少）
+            let urlSuffix = originalSuffix;
+            if (!urlSuffix.toLowerCase().endsWith('.aspx')) {
+                urlSuffix += '.aspx';
+            }
             if (!selectedBank || !questionBanks[selectedBank]) { log('请选择有效的题库', 'warning'); return; }
             const bank = questionBanks[selectedBank];
             const answers = bank.answers || {};
@@ -2582,7 +2871,7 @@
         
         window.clearLogs = function() { document.getElementById('statusContent').innerHTML = ''; log('日志已清空', 'info'); };
 
-        // ==================== 题目匹配独立模块（V8.0.2新增）====================
+        // ==================== 题目匹配独立模块（V8.0.3新增）====================
         // 存储结构与主题库完全一致：{ name, description, basicInfoCount, startQuestionNum, answers }
         (function(){
             'use strict';
@@ -2590,55 +2879,139 @@
             window.selectedMatchBank = null;
             window.matchEnabled = false;
             const DEFAULT_MATCH_BANK = {
-                name: "2026理化生实验操作模拟考试-化学题目",
-                description: "汤逊湖初中模拟",
-                basicInfoCount: 2,
-                startQuestionNum: 3,
-                answers: {
-                    "1": ["您的姓名"],
-                    "2": ["您的班级"],
-                    "3": ["下图加热高下列图标与电解水实验无关的是"],
-                    "4": ["电解水实验不需要的仪器是"],
-                    "5": ["电解水实验中，应在电解器中加水至"],
-                    "6": ["电解水实验中，可观察到"],
-                    "7": ["电解水实验中，打开电源开关后电极附近有气泡产生，下列说法正确的是"],
-                    "8": ["电解水一段时间后关闭电源，可观察到"],
-                    "9": ["点燃纯净的氢气，在火焰上方罩一个干燥的烧杯，可观察到"],
-                    "10": ["电解水一段时间后关闭电源，a、b管内产生气体的体积比约为"],
-                    "11": ["电解水一段时间后关闭电源，将燃着的木条伸到与电源正极相连的玻璃管尖嘴口，打开活塞，可观察到"],
-                    "12": ["观看视频，关于该实验，下列说法错误的是"],
-                    "13": ["制取二氧化碳需要用到下图所示仪器。该仪器的名称是"],
-                    "14": ["取用几小块石灰石（或大理石），需要用到的仪器是"],
-                    "15": ["取用几小块石灰石（若装置气密性良好，当用手紧握试管时，可观察到的现象是"],
-                    "16": ["实验室制取二氧化碳常用的试剂是"],
-                    "17": ["检验二氧化碳是否集满的正确操作是"],
-                    "18": ["下图实验不能说明二氧化碳具有的性质是"],
-                    "19": ["向集满二氧化碳的塑料瓶中加入适量的水，立即旋紧瓶盖并振荡，观察到塑料瓶变瘪，能得出的结论是"],
-                    "20": ["实验室制取二氧化碳，可在下图中选择的发生装置和收集装置是"],
-                    "21": ["取三朵用石蕊溶液染成紫色的干燥的纸花，分别进行如图所示实验。下列说法正确的是"],
-                    "22": ["点击观看视频。有关二氧化碳的实验室制取与性质的实验，下列说法正确的是"],
-                    "23": ["通过观察颜色可区分一些金属，下图中可能是金属铜的是"],
-                    "24": ["铝可以压制成厚度为0.1～0.2 mm的铝箔，说明铝具有良好的"],
-                    "25": ["下图实验能说明铜有的性质是"],
-                    "26": ["硬铝片可以在铝片上刻画出痕迹，说明"],
-                    "27": ["镁与稀盐酸反应有气体产生。将燃着的木条放在试管口，听到爆鸣声，说明该气体可能是"],
-                    "28": ["在装有铁、锌、镁、铜的试管中分别加入5 mL稀盐酸，一段时间后实验现象如图所示，③号试管中装有的金属是"],
-                    "29": ["铜片在酒精灯上加热后表面变黑，是因为"],
-                    "30": ["将一根洁净的铜丝浸入硝酸银溶液中。有关该实验说法错误的是"],
-                    "31": ["使用下列四种试剂进行实验，不能得出的金属活动性顺序是"],
-                    "32": ["将铝丝插入硫酸铜溶液中，点击观看视频。下列说法中错误的是"],
-                    "33": ["溶解粗盐时需要用到下图所示仪器。该仪器的名称是"],
-                    "34": ["称取5.0 g粗盐，需要用到的仪器是"],
-                    "35": ["将粗盐溶解于水中时，玻璃棒的作用是"],
-                    "36": ["量取10 mL水时，正确的读数方式是"],
-                    "37": ["如下图所示进行过滤操作，玻璃棒的作用是"],
-                    "38": ["蒸发食盐水时，不需要用到的仪器是"],
-                    "39": ["过滤后所得滤液仍然浑浊，可能的原因是"],
-                    "40": ["关于蒸发食盐水的操作，下列说法正确的是"],
-                    "41": ["按下图实验操作可以进行分离的一组物质是"],
-                    "42": ["点击观看视频，“粗盐中难溶性杂质的去除”实验结束后，若所得精盐的产率偏高，可能的原因是"]
+                "name": "2026光谷实验理化生实验操作模拟考试-化学题目",
+                "description": "光谷实验理化生模拟",
+                "basicInfoCount": 2,
+                "startQuestionNum": 3,
+                "answers": {
+                    "1": [
+                    "您的姓名："
+                    ],
+                    "2": [
+                    "班级号：（填写格式如910）"
+                    ],
+                    "3": [
+                    "下图实验能说明铜有的性质是（ ）"
+                    ],
+                    "4": [
+                    "在装有铁、锌、镁、铜的试管中分别加入5 mL稀盐酸，一段时间后实验现象如图所示，③号试管中装有的金属是（ ）"
+                    ],
+                    "5": [
+                    "通过观察颜色可区分一些金属，下图中可能是金属铜的是（ ）"
+                    ],
+                    "6": [
+                    "观看视频，关于该实验，下列说法错误的是（ ）"
+                    ],
+                    "7": [
+                    "制取二氧化碳需要用到下图所示仪器。该仪器的名称是（ ）"
+                    ],
+                    "8": [
+                    "取用几小块石灰石（或大理石），需要用到的仪器是（ ）"
+                    ],
+                    "9": [
+                    "取用几小块石灰石（若装置气密性良好，当用手紧握试管时，可观察到的现象是（ ）"
+                    ],
+                    "10": [
+                    "实验室制取二氧化碳常用的试剂是（ ）"
+                    ],
+                    "11": [
+                    "检验二氧化碳是否集满的正确操作是（ ）"
+                    ],
+                    "12": [
+                    "下图实验不能说明二氧化碳具有的性质是( )"
+                    ],
+                    "13": [
+                    "向集满二氧化碳的塑料瓶中加入适量的水，立即旋紧瓶盖并振荡，观察到塑料瓶变瘪，能得出的结论是（ ）"
+                    ],
+                    "14": [
+                    "实验室制取二氧化碳，可在下图中选择的发生装置和收集装置是（ ）"
+                    ],
+                    "15": [
+                    "取三朵用石蕊溶液染成紫色的干燥的纸花，分别进行如图所示实验。下列说法正确的是（ ）"
+                    ],
+                    "16": [
+                    "点击观看视频，“粗盐中难溶性杂质的去除”实验结束后，若所得精盐的产率偏高，可能的原因是（ ）"
+                    ],
+                    "17": [
+                    "铜片在酒精灯上加热后表面变黑，是因为（ ）"
+                    ],
+                    "18": [
+                    "将一根洁净的铜丝浸入硝酸银溶液中。有关该实验说法错误的是（ ）"
+                    ],
+                    "19": [
+                    "使用下列四种试剂进行实验，不能得出的金属活动性顺序是（ ）"
+                    ],
+                    "20": [
+                    "溶解粗盐时需要用到下图所示仪器。该仪器的名称是（）"
+                    ],
+                    "21": [
+                    "称取5.0 g粗盐，需要用到的仪器是（ ）"
+                    ],
+                    "22": [
+                    "将粗盐溶解于水中时，玻璃棒的作用是（ ）"
+                    ],
+                    "23": [
+                    "量取10 mL水时，正确的读数方式是（ ）"
+                    ],
+                    "24": [
+                    "如下图所示进行过滤操作，玻璃棒的作用是（）"
+                    ],
+                    "25": [
+                    "蒸发食盐水时，不需要用到的仪器是（ ）"
+                    ],
+                    "26": [
+                    "过滤后所得滤液仍然浑浊，可能的原因是（ ）"
+                    ],
+                    "27": [
+                    "关于蒸发食盐水的操作，下列说法正确的是（ ）"
+                    ],
+                    "28": [
+                    "按下图实验操作可以进行分离的一组物质是（ ）"
+                    ],
+                    "29": [
+                    "电解水实验中，应在电解器中加水至( )"
+                    ],
+                    "30": [
+                    "下列图标与电解水实验无关的是（ ）"
+                    ],
+                    "31": [
+                    "电解水实验不需要的仪器是（ ）"
+                    ],
+                    "32": [
+                    "电解水实验中，可观察到（ ）"
+                    ],
+                    "33": [
+                    "电解水实验中，打开电源开关后电极附近有气泡产生，下列说法正确的是（ ）"
+                    ],
+                    "34": [
+                    "电解水一段时间后关闭电源，可观察到（ ）"
+                    ],
+                    "35": [
+                    "点燃纯净的氢气，在火焰上方罩一个干燥的烧杯，可观察到（ ）"
+                    ],
+                    "36": [
+                    "电解水一段时间后关闭电源，a、b管内产生气体的体积比约为（ ）"
+                    ],
+                    "37": [
+                    "电解水一段时间后关闭电源，将燃着的木条伸到与电源正极相连的玻璃管尖嘴口，打开活塞，可观察到（ ）"
+                    ],
+                    "38": [
+                    "点击观看视频。有关二氧化碳的实验室制取与性质的实验，下列说法正确的是( )"
+                    ],
+                    "39": [
+                    "铝可以压制成厚度为0.1～0.2 mm的铝箔，说明铝具有良好的（ ）"
+                    ],
+                    "40": [
+                    "将铝丝插入硫酸铜溶液中，点击观看视频。下列说法中错误的是（）"
+                    ],
+                    "41": [
+                    "硬铝片可以在铝片上刻画出痕迹，说明（ ）"
+                    ],
+                    "42": [
+                    "镁与稀盐酸反应有气体产生。将燃着的木条放在试管口，听到爆鸣声，说明该气体可能是（ ）"
+                    ]
                 }
-            };
+                };
 
             function loadMatchBanks() {
                 try {
@@ -2714,7 +3087,7 @@
                     if (answers[key] && answers[key].length) {
                         let qText = answers[key][0];
                         if (qText.length > 30) qText = qText.substr(0,27)+'…';
-                        html += `<div class="bank-item" title="${answers[key][0]}">📌 第${key}题: ${qText}</div>`;
+                        html += `<div class="bank-item" title="${answers[key][0]}">第${key}题: ${qText}</div>`;
                         count++;
                     }
                 }
@@ -2733,11 +3106,11 @@
                 const contentTa = document.getElementById('matchBankContentTextarea');
                 
                 if (!isEdit) {
-                    title.textContent = '新建题目匹配库';
+                    title.textContent = '';
                     nameInput.value = '';
                     descInput.value = '';
-                    basicCountInput.value = '2';
-                    startNumInput.value = '3';
+                    basicCountInput.value = '';
+                    startNumInput.value = '';
                     contentTa.value = '';
                     window.editingMatchBank = null;
                     document.getElementById('matchBasicInfoContainer').style.display = 'none';
@@ -2751,18 +3124,25 @@
                     basicCountInput.value = bank.basicInfoCount || 2;
                     startNumInput.value = bank.startQuestionNum || 3;
                     const answers = bank.answers || {};
-                    const sortedKeys = Object.keys(answers).map(Number).filter(k => !isNaN(k)).sort((a,b)=>a-b);
+                    const basicCount = bank.basicInfoCount || 0;
+                    const sortedKeys = Object.keys(answers)
+                        .map(Number)
+                        .filter(k => !isNaN(k) && k > basicCount)   // 只保留大于基础信息题数的题号
+                        .sort((a, b) => a - b);
                     const lines = sortedKeys.map(k => answers[k][0] || '').join('\n');
                     contentTa.value = lines;
+                    contentTa.dispatchEvent(new Event('input'));  // 触发行号更新
                     window.editingMatchBank = window.selectedMatchBank;
-                    
+
                     let basicInfoText = '';
                     for (let i = 1; i <= bank.basicInfoCount; i++) {
                         if (bank.answers && bank.answers[i] && bank.answers[i].length > 0) {
                             basicInfoText += bank.answers[i][0] + '\n';
                         }
                     }
-                    document.getElementById('matchBasicInfoTextarea').value = basicInfoText.trim();
+                    const basicInfoTa = document.getElementById('matchBasicInfoTextarea');
+                    basicInfoTa.value = basicInfoText.trim();
+                    basicInfoTa.dispatchEvent(new Event('input'));  // 触发行号更新
                     const basicInfoContainer = document.getElementById('matchBasicInfoContainer');
                     basicInfoContainer.style.display = (bank.basicInfoCount > 0) ? 'block' : 'none';
                 }
@@ -2788,7 +3168,16 @@
                 const basicInfoContent = document.getElementById('matchBasicInfoTextarea').value.trim();
                 const content = document.getElementById('matchBankContentTextarea').value.trim();
 
-                if (!name) { alert('题库名称不能为空'); return; }
+                if (!name) { showMessageModal('保存失败', '题库名称不能为空'); return; }
+
+                // 新增：检查名称重复 
+                const isNameConflict = window.matchQuestionBanks[name] && 
+                    (!window.editingMatchBank || (window.editingMatchBank && window.editingMatchBank !== name));
+                if (isNameConflict) {
+                    showMessageModal('保存失败',`题目匹配库名称 "${name}" 已存在，请使用其他名称。`);
+                    log(`保存失败：题目匹配库名称 "${name}" 已存在`, 'error');
+                    return;
+                }
 
                 const answers = {};
                 
