@@ -29,7 +29,7 @@
   },
   "build": {
     "appId": "com.mcxgjkh.wjxautoanswer",
-    "productName": "WJXAA",
+    "productName": "问卷星自动答题器WJXAA_V8.1.1",
     "copyright": "Copyright © 2026 MCXGJKH",
     "directories": {
       "output": "dist"
@@ -73,7 +73,7 @@
       ]
     },
     "portable": {
-      "artifactName": "问卷星自动答题器WJXAA_V8.1.1_${arch}_portable便携版.${ext}",
+      "artifactName": "${productName}_${arch}_portable便携版.${ext}",
       "requestExecutionLevel": "user"
     },
     "nsis": {
@@ -82,8 +82,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "问卷星答题器 ${version}",
-      "artifactName": "问卷星自动答题器WJXAA_V8.1.1_${arch}_installer安装版.${ext}",
-      "include": "custom-install.nsh"
+      "artifactName": "${productName}_${arch}_installer安装版.${ext}"
     },
     "asar": true,
     "compression": "maximum",
