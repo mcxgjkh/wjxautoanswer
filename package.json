@@ -82,7 +82,8 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "问卷星答题器 ${version}",
-      "artifactName": "问卷星自动答题器WJXAA_V8.1.1_${arch}_installer安装版.${ext}"
+      "artifactName": "问卷星自动答题器WJXAA_V8.1.1_${arch}_installer安装版.${ext}",
+      "include": "custom-install.nsh"
     },
     "asar": true,
     "compression": "maximum",
