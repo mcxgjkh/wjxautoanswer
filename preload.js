@@ -27,7 +27,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     openExternal: (url) => ipcRenderer.invoke('open-external', url),
     
     // 移除监听器
-    removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel)
+    removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
+
+    // 清除cookies
+    clearCookies: () => ipcRenderer.invoke('clear-cookies')
 });
 
 // 暴露一些Node.js功能

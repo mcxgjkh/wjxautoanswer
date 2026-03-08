@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>问卷星自动答题器 V8.0.3</title>
+    <title>问卷星自动答题器 V8.1.1</title>
     <style>
         /* 美化滚动条样式 */
         ::-webkit-scrollbar {
@@ -422,6 +422,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
             gap: 10px;
+            overflow-x: auto; 
         }
         .bank-item {
             padding: 10px;
@@ -430,9 +431,34 @@
             font-size: 13px;
             font-family: 'Consolas', monospace;
             border-left: 3px solid #667eea;
-            word-break: break-word;
+            word-wrap: break-word;             /* 允许长单词换行 */
+            white-space: normal;               
         }
-        
+
+        #bankContentTextarea::-webkit-scrollbar,
+        #matchBankContentTextarea::-webkit-scrollbar {
+            height: 8px;                       /* 水平滚动条高度 */
+        }
+
+        #bankContentTextarea::-webkit-scrollbar-track,
+        #matchBankContentTextarea::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        #bankContentTextarea::-webkit-scrollbar-thumb,
+        #matchBankContentTextarea::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.3);
+        }
+
+        #bankContentTextarea::-webkit-scrollbar-thumb:hover,
+        #matchBankContentTextarea::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            border: 1px solid rgba(0, 0, 0, 0.5);
+        }
+                
         /* 速度选择样式 */
         .speed-options {
             display: grid;
@@ -781,43 +807,57 @@
 
         /* 带行号的编辑器容器 */
         .line-number-editor {
-            display: flex;
+            display: flex;                     /* 保持 flex 布局 */
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 8px;
-            overflow: hidden;
+            overflow: hidden;                  /* 隐藏溢出内容，但滚动条由内部 textarea 控制 */
             background: rgba(255, 255, 255, 0.05);
             min-height: 200px;
             max-height: 400px;
         }
 
+        #bankContentTextarea,
+        #matchBankContentTextarea {
+            white-space: pre;                  /* 保留空白且不自动换行 */
+            overflow-x: auto;                  /* 水平溢出时显示滚动条 */
+            overflow-y: auto;                  /* 保留垂直滚动 */
+            resize: vertical;                  /* 允许垂直调整大小（可选） */
+        }
+
+        /* 统一盒模型 */
+        .line-numbers,
+        .line-number-editor textarea {
+            box-sizing: border-box;
+        }
+
         .line-numbers {
-            width: 40px;
-            padding: 15px 5px;
+            padding: 15px 5px;              
+            line-height: 1.5;
+            font-size: 14px;
+            font-family: 'Consolas', monospace;
             background: rgba(0, 0, 0, 0.3);
             color: #8a8aff;
-            font-family: 'Consolas', monospace;
-            font-size: 14px;
-            line-height: 1.5;
             text-align: right;
             user-select: none;
-            overflow: hidden;
+            overflow: hidden;                
             white-space: pre-wrap;
             word-wrap: break-word;
             border-right: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .line-number-editor textarea {
-            flex: 1;
-            padding: 15px;
+            padding: 15px;                    /* 统一上下左右均为 15px */
+            line-height: 1.5;
+            font-size: 14px;
+            font-family: 'Consolas', monospace;
             background: transparent;
             border: none;
             color: white;
-            font-family: 'Consolas', monospace;
-            font-size: 14px;
-            line-height: 1.5;
             resize: vertical;
             outline: none;
             overflow-y: auto;
+            white-space: pre;                 /* 编辑时不换行 */
+            overflow-x: auto;
         }
 
         .line-number-editor textarea:focus {
@@ -861,7 +901,7 @@
     <div class="container">
         <div class="header">
             <h1>问卷星自动答题器</h1>
-            <div class="subtitle">V8.0.3 智能识别 | 题库管理版</div>
+            <div class="subtitle">V8.1.1 智能识别 | 题库管理版</div>
             <div class="version">Design By MCXGJKH</div>
         </div>
         
@@ -926,7 +966,7 @@
                     </div>
                 </div>
                 
-                <!-- 题库管理卡片（完全复用“题库管理”交互风格） -->
+                <!-- 题库管理卡片 -->
                 <div class="bank-manager" style="margin-top: 5px;">
                     <div class="bank-selector" style="display: flex; gap: 15px; margin-bottom: 15px; align-items: center;">
                         <select class="bank-select" id="matchBankSelect" style="flex: 1;">
@@ -1140,7 +1180,7 @@
         </div>
         
         <div class="footer">
-            © 2026 MCXGJKH | 问卷星自动答题器 V8.0.3
+            © 2026 MCXGJKH | 问卷星自动答题器 V8.1.1
         </div>
     </div>
 
@@ -1672,7 +1712,7 @@
                 ]
             },
             "exportInfo": {
-                "version": "V8.0.3",
+                "version": "V8.1.1",
                 "exportedAt": "2026-03-06T13:55:51.756Z",
                 "totalQuestions": 42,
                 "basicInfoCount": 2
@@ -1718,7 +1758,7 @@
                     showShortcutNotification('F12: 打开/关闭开发者工具');
                 }
             });
-            log('程序初始化完成 V8.0.3', 'success');
+            log('程序初始化完成 V8.1.1', 'success');
         });
 
         // ==================== 原有辅助函数 ====================
@@ -1728,7 +1768,7 @@
                 const shortcutLog = document.createElement('div');
                 shortcutLog.className = 'log info';
                 shortcutLog.innerHTML = `
-                    <strong>V8.0.3 快捷键说明：</strong><br>
+                    <strong>V8.1.1 快捷键说明：</strong><br>
                     • <b>F12</b>: 打开/关闭开发者工具（如无效请检查系统设置）<br>
                     • <b>Ctrl+Shift+I</b>: 打开/关闭开发者工具（备用）<br>
                     • <b>F5/Ctrl+R</b>: 刷新当前页面<br>
@@ -2234,7 +2274,6 @@
             else return date.toLocaleDateString('zh-CN');
         }
 
-        // 行号同步函数
         function setupLineNumberEditor(textareaId, lineNumbersId) {
             const textarea = document.getElementById(textareaId);
             const lineNumbers = document.getElementById(lineNumbersId);
@@ -2243,20 +2282,18 @@
             function updateLineNumbers() {
                 const lines = textarea.value.split('\n');
                 const lineCount = lines.length;
-                // 生成行号字符串：1\n2\n3...
                 const lineNumberText = Array.from({ length: lineCount }, (_, i) => i + 1).join('\n');
-                lineNumbers.textContent = lineNumberText || '1'; // 至少显示第一行
+                lineNumbers.textContent = lineNumberText || '1';
             }
 
-            // 初始化
             updateLineNumbers();
-
-            // 监听输入事件
             textarea.addEventListener('input', updateLineNumbers);
-            
-            // 监听滚动，使行号与文本同步滚动（可选，但推荐）
+
+            // 改进的滚动同步：使用 requestAnimationFrame 确保精准同步
             textarea.addEventListener('scroll', () => {
-                lineNumbers.scrollTop = textarea.scrollTop;
+                requestAnimationFrame(() => {
+                    lineNumbers.scrollTop = textarea.scrollTop;
+                });
             });
         }
 
@@ -2457,7 +2494,7 @@
                     basicInfoCount: bank.basicInfoCount || 2,
                     startQuestionNum: bank.startQuestionNum || 3,
                     answers: bank.answers,
-                    exportInfo: { version: 'V8.0.3', exportedAt: new Date().toISOString(), totalQuestions, basicInfoCount: bank.basicInfoCount || 2 }
+                    exportInfo: { version: 'V8.1.1', exportedAt: new Date().toISOString(), totalQuestions, basicInfoCount: bank.basicInfoCount || 2 }
                 });
                 if (result.success) {
                     const sizeInKB = (result.size / 1024).toFixed(2);
@@ -2492,15 +2529,14 @@
             }
         }
 
-        // ==================== 导入题库 ====================
+        // 导入题库 
         async function importBank() {
             log('准备导入题库...', 'info');
             
-            // 创建文件选择器
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = '.json,application/json';
-            
+            input.accept = '.json,.csv,application/json,text/csv';  // 同时支持 JSON 和 CSV
+
             input.onchange = function(e) {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -2508,16 +2544,26 @@
                 const reader = new FileReader();
                 reader.onload = function(ev) {
                     try {
-                        const bank = JSON.parse(ev.target.result);
+                        const fileContent = ev.target.result;
+                        const fileName = file.name;
+                        const format = fileName.split('.').pop().toLowerCase();
                         
-                        // 验证题库格式（必须包含 name 和 answers）
-                        if (!bank.name || !bank.answers || typeof bank.answers !== 'object') {
-                            alert('无效的题库文件：缺少 name 或 answers 对象');
+                        let bankData;
+                        if (format === 'csv') {
+                            // 使用已有的 CSV 解析函数
+                            bankData = parseCSVToBank(fileContent, fileName.replace('.csv', ''));
+                        } else {
+                            bankData = JSON.parse(fileContent);
+                        }
+                        
+                        // 验证题库格式
+                        if (!bankData.name || !bankData.answers || typeof bankData.answers !== 'object') {
+                            showMessageModal('导入失败', '无效的题库文件：缺少 name 或 answers 对象');
                             return;
                         }
                         
-                        // 处理同名题库：自动重命名
-                        let finalName = bank.name;
+                        // 处理同名题库
+                        let finalName = bankData.name;
                         if (questionBanks[finalName]) {
                             let counter = 1;
                             while (questionBanks[`${finalName} (${counter})`]) counter++;
@@ -2527,10 +2573,10 @@
                         // 保存题库
                         questionBanks[finalName] = {
                             name: finalName,
-                            description: bank.description || '',
-                            basicInfoCount: bank.basicInfoCount || 2,
-                            startQuestionNum: bank.startQuestionNum || 3,
-                            answers: bank.answers || {}
+                            description: bankData.description || '',
+                            basicInfoCount: bankData.basicInfoCount || 2,
+                            startQuestionNum: bankData.startQuestionNum || 3,
+                            answers: bankData.answers || {}
                         };
                         
                         saveBanksToStorage();
@@ -2539,12 +2585,12 @@
                         document.getElementById('bankSelect').value = finalName;
                         updateBankPreview();
                         
-                        log(`✅ 导入题库: ${finalName} (${Object.keys(bank.answers).length}题)`, 'success');
+                        log(`✅ 导入题库: ${finalName} (${Object.keys(bankData.answers).length}题)`, 'success');
                         showNotification('导入成功', `题库 "${finalName}" 已导入`, 'success');
                         updateMatchCheckboxState();
                         
                     } catch (ex) {
-                        alert('解析失败，请检查文件是否为有效的 JSON 格式');
+                        showMessageModal('导入失败', '解析失败，请检查文件是否为有效的 JSON 或 CSV 格式');
                         log(`❌ 导入失败: ${ex.message}`, 'error');
                     }
                 };
@@ -2871,7 +2917,7 @@
         
         window.clearLogs = function() { document.getElementById('statusContent').innerHTML = ''; log('日志已清空', 'info'); };
 
-        // ==================== 题目匹配独立模块（V8.0.3新增）====================
+        // ==================== 题目匹配独立模块（V8.1.1新增）====================
         // 存储结构与主题库完全一致：{ name, description, basicInfoCount, startQuestionNum, answers }
         (function(){
             'use strict';
@@ -3252,21 +3298,18 @@
                 
                 delBtn.addEventListener('click', function(){
                     if (window.selectedMatchBank === DEFAULT_MATCH_BANK.name) {
-                        log('默认题目匹配库不能删除', 'error');
-                        alert('默认题目匹配库不能删除，如需删除请先创建其他题库。');
+                        showMessageModal('删除失败', '默认题目匹配库不能删除，如需删除请先创建其他题库。');
                         return;
                     }
 
                     const bankCount = Object.keys(window.matchQuestionBanks).length;
                     if (bankCount === 0) {
-                        log('没有题目匹配库可删除', 'error');
-                        alert('当前没有题目匹配库，请先创建或导入题库。');
+                        showMessageModal('删除失败', '当前没有题目匹配库，请先创建或导入题库。');
                         return;
                     }
                     
                     if (bankCount <= 1) {
-                        log('不能删除最后一个题目匹配库', 'warning');
-                        alert('不能删除最后一个题目匹配库，请至少保留一个题库。');
+                        showMessageModal('删除失败', '不能删除最后一个题目匹配库，请至少保留一个题库。');
                         return;
                     }
                     
@@ -3279,48 +3322,115 @@
                 });
             }
 
-            function exportMatchBank() {
+            async function exportMatchBank() {
                 const bank = window.matchQuestionBanks[window.selectedMatchBank];
-                if (!bank) return;
-                const dataStr = JSON.stringify(bank, null, 2);
-                const blob = new Blob([dataStr], {type: 'application/json'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `${bank.name || 'match_bank'}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-                log(`✅ 题目匹配库已导出`, 'success');
+                if (!bank) {
+                    showMessageModal('导出失败', '没有选中的题库');
+                    return;
+                }
+
+                const total = Object.keys(bank.answers || {}).length;
+                if (total === 0) {
+                    showMessageModal('导出失败', '当前题库为空，无法导出');
+                    return;
+                }
+
+                log(`正在导出题目匹配库: ${bank.name}...`, 'info');
+
+                try {
+                    const result = await window.electronAPI.exportBank({
+                        name: bank.name,
+                        description: bank.description || '',
+                        basicInfoCount: bank.basicInfoCount || 2,
+                        startQuestionNum: bank.startQuestionNum || 3,
+                        answers: bank.answers || {},
+                        exportInfo: {
+                            version: 'V8.1.1',
+                            exportedAt: new Date().toISOString(),
+                            totalQuestions: total,
+                            basicInfoCount: bank.basicInfoCount || 2
+                        }
+                    });
+
+                    if (result.success) {
+                        const sizeInKB = (result.size / 1024).toFixed(2);
+                        log(`题目匹配库导出成功: ${result.filePath} (${sizeInKB} KB, ${total}题)`, 'success');
+                        showNotification('导出成功', `题目匹配库 "${bank.name}" 已成功导出为 ${result.format} 格式文件`, 'success');
+                    } else {
+                        if (result.error !== '用户取消操作') {
+                            showMessageModal('导出失败', result.error);
+                        }
+                        log(`导出失败: ${result.error}`, 'error');
+                    }
+                } catch (error) {
+                    showMessageModal('导出出错', error.message);
+                    log(`导出出错: ${error.message}`, 'error');
+                }
             }
 
             function importMatchBank() {
                 const input = document.createElement('input');
                 input.type = 'file';
-                input.accept = '.json,application/json';
+                input.accept = '.json,.csv,application/json,text/csv';  // 同时支持 JSON 和 CSV
+
                 input.onchange = function(e) {
                     const file = e.target.files[0];
                     const reader = new FileReader();
+                    
                     reader.onload = function(ev) {
                         try {
-                            const bank = JSON.parse(ev.target.result);
-                            if (bank.name && bank.answers && typeof bank.answers === 'object') {
-                                window.matchQuestionBanks[bank.name] = bank;
-                                saveMatchBanks();
-                                window.selectedMatchBank = bank.name;
-                                updateMatchBankSelect();
-                                updateMatchBankPreview();
-                                const total = Object.keys(bank.answers).length;
-                                log(`📥 导入题目匹配库: ${bank.name} (${total}题)`, 'success');
-                                updateMatchCheckboxState();
+                            const fileContent = ev.target.result;
+                            const fileName = file.name;
+                            const format = fileName.split('.').pop().toLowerCase();
+                            
+                            let bankData;
+                            if (format === 'csv') {
+                                // 复用已有的 CSV 解析函数（数据结构相同）
+                                bankData = parseCSVToBank(fileContent, fileName.replace('.csv', ''));
                             } else {
-                                alert('无效的题库文件：缺少 name 或 answers 对象');
+                                bankData = JSON.parse(fileContent);
                             }
+                            
+                            // 验证题库格式
+                            if (!bankData.name || !bankData.answers || typeof bankData.answers !== 'object') {
+                                showMessageModal('导入失败', '无效的题库文件：缺少 name 或 answers 对象');
+                                return;
+                            }
+                            
+                            // 处理同名题库
+                            let finalName = bankData.name;
+                            if (window.matchQuestionBanks[finalName]) {
+                                let counter = 1;
+                                while (window.matchQuestionBanks[`${finalName} (${counter})`]) counter++;
+                                finalName = `${finalName} (${counter})`;
+                            }
+                            
+                            // 保存题库
+                            window.matchQuestionBanks[finalName] = {
+                                name: finalName,
+                                description: bankData.description || '',
+                                basicInfoCount: bankData.basicInfoCount || 2,
+                                startQuestionNum: bankData.startQuestionNum || 3,
+                                answers: bankData.answers || {}
+                            };
+                            
+                            saveMatchBanks();
+                            window.selectedMatchBank = finalName;
+                            updateMatchBankSelect();
+                            updateMatchBankPreview();
+                            
+                            log(`📥 导入题目匹配库: ${finalName} (${Object.keys(bankData.answers).length}题)`, 'success');
+                            showNotification('导入成功', `题目匹配库 "${finalName}" 已导入`, 'success');
+                            updateMatchCheckboxState();
+                            
                         } catch(ex) {
-                            alert('解析失败，请检查文件格式');
+                            showMessageModal('导入失败', '解析失败，请检查文件是否为有效的 JSON 或 CSV 格式');
+                            log(`❌ 导入失败: ${ex.message}`, 'error');
                         }
                     };
                     reader.readAsText(file);
                 };
+                
                 input.click();
             }
 
