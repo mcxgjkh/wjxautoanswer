@@ -21,7 +21,7 @@ function createMainWindow() {
             webSecurity: false,
             devTools: true
         },
-        title: '问卷星自动答题器 V8.1.1 - By 满城箫管尽开花',
+        title: '问卷星自动答题器 V8.1.2 - By 满城箫管尽开花',
         show: false
     });
 
@@ -34,7 +34,7 @@ function createMainWindow() {
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
         // 强制设置窗口标题，覆盖页面标题
-        mainWindow.setTitle('问卷星自动答题器 V8.1.1 - By 满城箫管尽开花');
+        mainWindow.setTitle('问卷星自动答题器 V8.1.2 - By 满城箫管尽开花');
         
         // 开发模式下打开DevTools
         if (process.env.NODE_ENV === 'development') {
@@ -74,12 +74,15 @@ function createMainWindow() {
     return mainWindow;
 }
 
-// 创建问卷星窗口
+// 创建问卷星窗口（每次使用独立session，相当于无痕模式）
 function createWjxWindow(config) {
     if (wjxWindow && !wjxWindow.isDestroyed()) {
         wjxWindow.focus();
         return wjxWindow;
     }
+    
+    // 为每个窗口创建全新的 session partition，确保无痕
+    const partition = `persist:temp-${Date.now()}-${Math.random()}`;
     
     wjxWindow = new BrowserWindow({
         width: 1300,
@@ -91,7 +94,8 @@ function createWjxWindow(config) {
             contextIsolation: true,
             webSecurity: false,
             enableRemoteModule: false,
-            devTools: true
+            devTools: true,
+            partition: partition  // 使用独立session
         },
         title: '问卷星 - 自动答题中...',
         show: true,
@@ -100,7 +104,7 @@ function createWjxWindow(config) {
     
     // 构建问卷URL
     const wjxUrl = `https://ks.wjx.com/vm/${config.urlSuffix}`;
-    console.log('V8.1.1 - 加载问卷页面:', wjxUrl);
+    console.log('V8.1.2 - 加载问卷页面（无痕模式）:', wjxUrl);
     
     wjxWindow.loadURL(wjxUrl);
     
@@ -131,47 +135,37 @@ function createWjxWindow(config) {
         
         // 注入答题脚本
         try {
-            // 读取答题脚本
             const fs = require('fs');
             const answerScript = fs.readFileSync(path.join(__dirname, 'answer-script.js'), 'utf-8');
             
-            // 创建注入脚本 - 添加题目匹配配置
             const injectScript = `
-                // 注入配置 V8.1.1
+                // 注入配置 V8.1.2
                 window.ElectronSpeedConfig = ${JSON.stringify(config.speedConfig)};
                 window.ElectronAccuracy = ${config.accuracy / 100};
                 window.ElectronAnswers = ${JSON.stringify(config.answers || {})};
                 window.ElectronBasicInfoCount = ${config.basicInfoCount || 2};
                 
-                // ========== 题目匹配配置注入（V8.1.1新增）==========
                 window.ElectronMatchEnabled = ${config.matchEnabled === true};
                 window.ElectronMatchBank = ${JSON.stringify(config.matchBank || null)};
-                // ========== 题目匹配配置注入结束 ==========
                 
-                // 注入jQuery（如果页面没有）
                 if (typeof jQuery === 'undefined') {
                     const script = document.createElement('script');
                     script.src = 'https://code.jquery.com/jquery-3.6.0.min.js';
                     script.onload = function() {
-                        // 注入答题脚本
                         ${answerScript}
-                        // 脚本加载完成后输出调试信息
                         console.log('答题脚本已加载，matchEnabled:', window.ElectronMatchEnabled);
                         console.log('matchBank:', window.ElectronMatchBank);
                     };
                     document.head.appendChild(script);
                 } else {
-                    // 直接注入答题脚本
                     ${answerScript}
                     console.log('答题脚本已加载，matchEnabled:', window.ElectronMatchEnabled);
                     console.log('matchBank:', window.ElectronMatchBank);
                 }
             `;
             
-            // 执行注入脚本
             await wjxWindow.webContents.executeJavaScript(injectScript);
             
-            // 通知主窗口
             if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send('wjx-loaded', true);
             }
@@ -247,7 +241,7 @@ app.on('window-all-closed', () => {
 
 // IPC通信处理
 ipcMain.handle('open-wjx', async (event, config) => {
-    console.log('V8.1.1 - 打开问卷页面，配置:', {
+    console.log('V8.1.2 - 打开问卷页面，配置:', {
         speed: config.speedConfig.name,
         accuracy: config.accuracy,
         urlSuffix: config.urlSuffix,
