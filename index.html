@@ -2451,16 +2451,13 @@
             const questionLines = questionContent.split('\n').filter(line => line.trim() !== '');
             let currentQuestionNum = startQuestionNum;
             questionLines.forEach((line, index) => {
-                if (currentQuestionNum > 1000) { log(`警告: 题目数量超过1000条限制，第${index + 1}行之后的内容将被忽略`, 'warning'); return; }
+                if (currentQuestionNum > 1000) { 
+                    log(`警告: 题目数量超过1000条限制，第${index + 1}行之后的内容将被忽略`, 'warning'); 
+                    return; 
+                }
                 const answerText = line.trim();
                 if (answerText) {
-                    const answerArray = [answerText];
-                    if (answerText.length < 50) {
-                        const letters = ['A', 'B', 'C', 'D'];
-                        const letter = letters[Math.min(index, 3)];
-                        answerArray.push(`${letter} ${answerText}`);
-                    }
-                    answers[currentQuestionNum.toString()] = answerArray;
+                    answers[currentQuestionNum.toString()] = [answerText];
                     currentQuestionNum++;
                 }
             });
