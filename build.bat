@@ -37,13 +37,13 @@ echo 您同意吗？(yes/no)
 set /p allow=请输入yes或no：
 if /i %allow% EQU yes (
     if exist %filepath% (
-        xcopy .\build_dependencies\electron-v25.9.8-win32-x64.zip %LOCALAPPDATA%\electron\Cache
-        xcopy .\build_dependencies\electron-v25.9.8-win32-ia32.zip %LOCALAPPDATA%\electron\Cache
+        xcopy .\build_dependencies\electron-v21.4.4-win32-x64.zip %LOCALAPPDATA%\electron\Cache
+        xcopy .\build_dependencies\electron-v21.4.4-win32-ia32.zip %LOCALAPPDATA%\electron\Cache
     ) else (
         cd %LOCALAPPDATA%
         mkdir -p \electron\Cache\
-        xcopy %localpath%\build_dependencies\electron-v25.9.8-win32-x64.zip %LOCALAPPDATA%\Local\electron\Cache
-        xcopy %localpath%\build_dependencies\electron-v25.9.8-win32-ia32.zip %LOCALAPPDATA%\Local\electron\Cache
+        xcopy %localpath%\build_dependencies\electron-v21.4.4-win32-x64.zip %LOCALAPPDATA%\Local\electron\Cache
+        xcopy %localpath%\build_dependencies\electron-v21.4.4-win32-ia32.zip %LOCALAPPDATA%\Local\electron\Cache
     )
     if exist %filepath2% (
         xcopy .\build_dependencies\nsis %LOCALAPPDATA%\electron-builder\Cache /E
