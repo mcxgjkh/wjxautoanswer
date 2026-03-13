@@ -1,7 +1,7 @@
 {
   "name": "wjx-auto-answer",
   "version": "8.1.2",
-  "description": "问卷星自动答题器 V8.1.2 - Design By MCXGJKH",
+  "description": "问卷星自动答题器 V8.1.2 - Design By MCXGJKH (Win7兼容版)",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -14,7 +14,7 @@
     "build:standard": "npm run build:win && npm run build:win32",
     "build:portable-all": "npm run build:portable && npm run build:portable32",
     "build:all": "npm run clean && npm run build:portable && npm run build:portable32 && npm run build:win && npm run build:win32",
-    "clean": "rm -rf build"
+    "clean": "rm -rf dist"
   },
   "keywords": [
     "问卷星",
@@ -24,8 +24,8 @@
   "author": "MCXGJKH",
   "license": "AGPL-3.0",
   "devDependencies": {
-    "electron": "^25.9.8",
-    "electron-builder": "^24.6.0"
+    "electron": "^21.4.4",
+    "electron-builder": "^23.6.0"
   },
   "build": {
     "appId": "com.mcxgjkh.wjxautoanswer",
