@@ -1,12 +1,12 @@
 # 问卷星自动答题器
 
-![版本](https://img.shields.io/badge/版本-8.1.3-blue)
+![版本](https://img.shields.io/badge/版本-8.2.1-blue)
 ![许可证](https://img.shields.io/badge/许可证-AGPLv3-green)
 ![构建](https://img.shields.io/badge/构建-passing-brightgreen)
 ![Electron](https://img.shields.io/badge/Electron-21.4.4-blue)
 ![Node](https://img.shields.io/badge/Node-16+-green)
 ![平台](https://img.shields.io/badge/平台-Windows%20|%20macOS%20|%20Linux-lightgrey)*（MacOS与Linux请自行修改package.json编译）*
-![最后提交](https://img.shields.io/badge/最后提交-2026--03--13-orange)
+![最后提交](https://img.shields.io/badge/最后提交-2026--03--14-orange)
 ![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
 **问卷星自动答题器** 是一款基于 Electron 的跨平台桌面应用程序，专为问卷星平台（也兼容其他的）设计，提供智能题库管理、题目文本匹配、图片URL识别、正确率控制及多档速度调节等功能。本项目仅用于学习研究，请勿用于非法用途。
@@ -30,7 +30,7 @@
   - 自动计算需要正确的题数，故意答错多余题目  
 
 - ✅ **多档答题速度**  
-  - 刘子轩速度（5秒）、极速、快速、标准、适中、自然、慢速、极慢、随机  
+  - 真的很快（5秒）、极速、快速、标准、适中、自然、慢速、极慢、随机  
 
 - ✅ **链接历史记录**  
   - 自动保存访问过的问卷后缀，支持标题备注与快速选择  
@@ -44,7 +44,7 @@
 
 ## 🛠 技术栈
 
-- **Electron** 28.0.0+  
+- **Electron** 21.4.4
 - **HTML5 / CSS3**  
 - **Vanilla JavaScript**（无前端框架）  
 - **electron-builder** 打包工具  
@@ -176,6 +176,15 @@ Fork 本仓库
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，  
 版本号遵循 [语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。
+
+---
+
+## [8.2.1] - 2026-03-14
+
+### 🎨 优化
+
+- **题目图片匹配**
+  -可以匹配题干中的图片URL以应对题干文本内容相同但图片有区别的题目
 
 ---
 
@@ -336,3 +345,4 @@ Fork 本仓库
 [8.1.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.1.1
 [8.1.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.1.2
 [8.1.3]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.1.3
+[8.2.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.2.1

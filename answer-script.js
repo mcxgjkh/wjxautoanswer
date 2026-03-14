@@ -1,6 +1,5 @@
 // ============================
-// V8.1.3 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
-// 新增图片URL匹配功能
+// V8.2.1 Design By MCXGJKH
 // ============================
 
 (function() {
@@ -12,12 +11,12 @@
     const electronAnswers = window.ElectronAnswers || {};
     const electronBasicInfoCount = window.ElectronBasicInfoCount || 2; // 基础信息填写题数，默认2题
     
-    // ==================== 题目匹配配置（V8.1.3新增）====================
+    // ==================== 题目匹配配置 ====================
     const matchEnabled = window.ElectronMatchEnabled || false;
     const matchBank = window.ElectronMatchBank || null;
 
-    console.log('V8.1.3 - 题目匹配功能:', matchEnabled ? '启用' : '禁用');
-    console.log('V8.1.3 - 收到的原始配置:');
+    console.log('V8.2.1 - 题目匹配功能:', matchEnabled ? '启用' : '禁用');
+    console.log('V8.2.1 - 收到的原始配置:');
     console.log('  ElectronMatchEnabled:', window.ElectronMatchEnabled);
     console.log('  ElectronMatchBank:', window.ElectronMatchBank);
 
@@ -39,9 +38,9 @@
     }
     // ==================== 题目匹配配置结束 ====================
     
-    console.log('V8.1.3 - 来自Electron的配置:', electronConfig);
-    console.log('V8.1.3 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
-    console.log('V8.1.3 - 基础信息填写题数:', electronBasicInfoCount);
+    console.log('V8.2.1 - 来自Electron的配置:', electronConfig);
+    console.log('V8.2.1 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
+    console.log('V8.2.1 - 基础信息填写题数:', electronBasicInfoCount);
     
     // ==================== 速度配置 ====================
     const SPEED_OPTIONS = [
@@ -288,7 +287,7 @@
         statusBar.className = 'electron-status-bar';
         statusBar.innerHTML = `
             <div class="left">
-                <div class="title">问卷星自动答题器 V8.1.3</div>
+                <div class="title">问卷星自动答题器 V8.2.1</div>
                 <div class="status" id="statusText">准备中...</div>
                 <div class="accuracy-info">正确率: <span class="accuracy-value">${(accuracy * 100).toFixed(0)}%</span></div>
                 <div class="basic-info-count">基础信息: ${electronBasicInfoCount}题</div>
@@ -340,7 +339,7 @@
         }
     }
     
-    // ==================== 答题机器人 V8.1.3（增强版） ====================
+    // ==================== 答题机器人 V8.2.1（增强版） ====================
     class AnswerBot {
         constructor(speedOption, accuracy, basicInfoCount, matchEnabled, matchBank) {
             this.speedOption = speedOption;
@@ -361,7 +360,7 @@
             this.matchEnabled = matchEnabled === true;
             this.matchBank = matchBank || { answers: {}, basicInfoCount: 2, startQuestionNum: 3 };
             
-            console.log(`V8.1.3 - 初始化答题机器人（支持图片URL匹配）`);
+            console.log(`V8.2.1 - 初始化答题机器人（支持图片URL匹配）`);
             console.log(`  速度模式: ${speedOption.name}`);
             console.log(`  目标正确率: ${(accuracy * 100).toFixed(0)}%`);
             console.log(`  基础信息题数: ${basicInfoCount}`);
@@ -451,22 +450,54 @@
             return false;
         }
 
-        // 题目文本匹配（根据题目内容查找题号）
+        // 题目匹配
         matchQuestionText(questionElement, questionNum) {
             if (!this.matchEnabled || !this.matchBank || !this.matchBank.answers) {
                 return null;
             }
 
-            // 提取当前题目的题干文本（只取标题）
+            // 第一步：如果当前题目包含图片，尝试用图片URL匹配题库中的条目（可能存储为URL）
+            if (hasImagesInQuestion(questionElement)) {
+                const questionImageUrls = extractImageUrlsFromQuestion(questionElement);
+                if (questionImageUrls.length > 0) {
+                    console.log(`  题目包含图片，尝试用图片URL匹配题库...`);
+                    const answers = this.matchBank.answers;
+                    for (const [qNumStr, qTextArr] of Object.entries(answers)) {
+                        const libText = qTextArr[0]; // 题库中的题目文本（可能是URL）
+                        if (!libText) continue;
+                        
+                        // 检查libText是否像URL（简单判断）
+                        const isLikelyUrl = libText.startsWith('http') || 
+                                            libText.startsWith('//') || 
+                                            /\.(jpg|jpeg|png|gif|bmp|webp)(\?|$)/i.test(libText);
+                        if (!isLikelyUrl) continue;
+
+                        const normalizedLibUrl = normalizeImageUrl(libText.trim());
+                        for (const questionUrl of questionImageUrls) {
+                            const normalizedQuestionUrl = normalizeImageUrl(questionUrl);
+                            if (normalizedLibUrl === normalizedQuestionUrl || 
+                                normalizedLibUrl.includes(normalizedQuestionUrl) ||
+                                normalizedQuestionUrl.includes(normalizedLibUrl)) {
+                                console.log(`  图片URL匹配成功: 题号 ${qNumStr} - 库URL: ${libText}`);
+                                return parseInt(qNumStr);
+                            }
+                        }
+                    }
+                    console.log(`  图片URL匹配失败，继续尝试文本匹配`);
+                }
+            }
+
+            // 第二步：原有的文本匹配逻辑（提取题干文本并清理，进行绝对匹配和相似度匹配）
+            // 以下代码保持不变（从原始方法中复制）
             const $question = $(questionElement);
             let rawQuestionText = '';
 
             // 尝试多种可能包含题干的容器
             const possibleContainers = [
-                '.field-label',           // 问卷星常见结构
-                '.topichtml',             // 有时直接使用这个类
-                '.topic-title',           // 备选
-                '.question-title'         // 备选
+                '.field-label',
+                '.topichtml',
+                '.topic-title',
+                '.question-title'
             ];
 
             for (const selector of possibleContainers) {
@@ -474,14 +505,11 @@
                 if (rawQuestionText) break;
             }
 
-            // 如果以上都失败，降级使用整个题目区域的文本（但排除选项区域）
             if (!rawQuestionText) {
-                // 尝试只获取题目部分，排除 .ui-controlgroup 等选项区域
                 const $fieldLabel = $question.children('.field-label');
                 if ($fieldLabel.length) {
                     rawQuestionText = $fieldLabel.text().trim();
                 } else {
-                    // 最后手段：提取所有文本但尝试通过移除选项文本来清理（不推荐，但作为保底）
                     rawQuestionText = $question.clone()
                         .find('.ui-controlgroup, .ui-radio, .ui-checkbox, .option_wrap, .errorMessage')
                         .remove()
@@ -496,85 +524,61 @@
                 return null;
             }
 
-            // 文本清理
-            let cleanedText = rawQuestionText;
-            // 记录清理前文本（用于调试）
             console.log(`  原始题目文本: "${rawQuestionText}"`);
 
-            // 移除开头的星号
+            // 文本清理
+            let cleanedText = rawQuestionText;
             cleanedText = cleanedText.replace(/^\s*\*+\s*/, '');
-
-            // 1. 移除开头的题号（如“1.”、“1、”、“[1]”、“(1)”等）
             cleanedText = cleanedText.replace(/^\s*[\d①②③④⑤⑥⑦⑧⑨⑩]+[\.、）)\s]*/g, '');
-            
-            // 2. 移除开头的题型标识（如“[单选]”、“[多选]”、“[判断题]”等）
             cleanedText = cleanedText.replace(/^\[[^\]]+\]\s*/g, '');
-            
-            // 3. 移除开头的括号内容（如“（不定项）”、“(多选)”等）
             cleanedText = cleanedText.replace(/^[\(（][^\)）]+[\)）]\s*/g, '');
-            
-            // 4. 移除“第X题”开头
             cleanedText = cleanedText.replace(/^第[\d①②③④⑤⑥⑦⑧⑨⑩]+题\s*/g, '');
-            
-            // 5. 最终trim
             cleanedText = cleanedText.trim();
 
-            // 如果清理后为空，尝试使用原始文本（但移除常见前缀后可能还有内容）
-            if (!cleanedText) {
-                cleanedText = rawQuestionText;
-            }
-
+            if (!cleanedText) cleanedText = rawQuestionText;
             console.log(`  清理后题目文本: "${cleanedText}"`);
 
             const matchBankBasic = this.matchBank.basicInfoCount || 0;
             const answers = this.matchBank.answers;
 
-            // 第一步：绝对匹配（完全相等）
+            // 绝对匹配
             console.log(`  开始绝对匹配...`);
             for (const [qNumStr, qTextArr] of Object.entries(answers)) {
-                const libQuestion = qTextArr[0]; // 题目文本
+                const libQuestion = qTextArr[0];
                 if (!libQuestion) continue;
-
                 const qNum = parseInt(qNumStr);
-                if (qNum <= matchBankBasic) continue; // 跳过基础信息题
-
+                if (qNum <= matchBankBasic) continue;
                 const libQuestionClean = libQuestion.trim().toLowerCase();
                 const currentLower = cleanedText.toLowerCase();
-
                 if (currentLower === libQuestionClean) {
                     console.log(`  绝对匹配成功: 题号 ${qNum} - 库文本: "${libQuestion}"`);
                     return qNum;
                 }
             }
 
-            // 第二步：相似度匹配（≥80%）
+            // 相似度匹配（≥80%）
             console.log(`  绝对匹配失败，尝试相似度匹配...`);
             let bestMatch = null;
             let bestSimilarity = 0;
-            const candidates = []; // 用于记录相似度较高的候选（调试用）
+            const candidates = [];
 
             for (const [qNumStr, qTextArr] of Object.entries(answers)) {
                 const libQuestion = qTextArr[0];
                 if (!libQuestion) continue;
-
                 const qNum = parseInt(qNumStr);
                 if (qNum <= matchBankBasic) continue;
-
                 const libQuestionClean = libQuestion.trim().toLowerCase();
                 const currentLower = cleanedText.toLowerCase();
-
                 const similarity = this.calculateSimilarity(currentLower, libQuestionClean);
                 if (similarity > bestSimilarity) {
                     bestSimilarity = similarity;
                     bestMatch = qNum;
                 }
-                // 记录相似度较高的候选（如 >0.5）供调试
                 if (similarity >= 0.5) {
                     candidates.push({ qNum, libQuestion, similarity });
                 }
             }
 
-            // 按相似度排序并输出前几个候选
             if (candidates.length > 0) {
                 candidates.sort((a, b) => b.similarity - a.similarity);
                 console.log(`  相似度候选:`);
@@ -657,7 +661,7 @@
                 return 'image_matched';
             }
 
-            // ===== 第二步：题目文本匹配（V8.1.3新增）- 优先执行 =====
+            // ===== 第二步：题目文本匹配（V8.2.1新增）- 优先执行 =====
             if (this.matchEnabled) {
                 console.log(`  尝试题目文本匹配...`);
                 const matchedQuestionNum = this.matchQuestionText(questionElement, questionNum);
@@ -919,7 +923,7 @@
                 return 0;
             }
             const targetCorrectCount = Math.ceil(totalAnswerable * this.accuracy);
-            console.log(`V8.1.3 - 正确率计算:`);
+            console.log(`V8.2.1 - 正确率计算:`);
             console.log(`  有效题目数: ${totalAnswerable}题`);
             console.log(`  设定正确率: ${(this.accuracy * 100).toFixed(0)}%`);
             console.log(`  需要正确题数: ceil(${totalAnswerable} × ${this.accuracy}) = ${targetCorrectCount}题`);
@@ -971,7 +975,7 @@
             }
             
             const actualAccuracy = this.correctCount / totalAnswerable;
-            console.log(`V8.1.3 - 答题完成:`);
+            console.log(`V8.2.1 - 答题完成:`);
             console.log(`  总共答题: ${this.completedCount}题`);
             console.log(`  正确答题: ${this.correctCount}题`);
             console.log(`  错误答题: ${this.errorQuestions.length}题`);
@@ -1001,7 +1005,7 @@
             const targetAccuracy = (this.accuracy * 100).toFixed(0);
             const actualAccuracyPercent = (actualAccuracy * 100).toFixed(1);
             const confirmed = confirm(
-                `V8.1.3 - 答题完成！\n\n` +
+                `V8.2.1 - 答题完成！\n\n` +
                 `题库统计:\n` +
                 `  总题目: ${this.allQuestions.length}题\n` +
                 `  基础信息: ${this.basicInfoCount}题\n` +
@@ -1074,7 +1078,7 @@
             console.log('答题正在进行中...');
             return;
         }
-        console.log('V8.1.3 - 启动自动答题...');
+        console.log('V8.2.1 - 启动自动答题...');
         console.log(`运行在Electron中，速度: ${selectedSpeed.name}, 正确率: ${(accuracy * 100).toFixed(0)}%`);
         isRunning = true;
         updateStatus('正在启动...', 0);
@@ -1088,7 +1092,7 @@
     
     // ==================== 初始化 ====================
     function init() {
-        console.log('答题脚本 V8.1.3 已加载');
+        console.log('答题脚本 V8.2.1 已加载');
         console.log('正在初始化...');
         const answerKeys = Object.keys(ANSWERS);
         if (answerKeys.length === 0) {
@@ -1140,6 +1144,6 @@
         setTimeout(init, 100);
     }
     
-    console.log('Electron版答题脚本 V8.1.3 初始化完成，支持图片URL匹配');
+    console.log('Electron版答题脚本 V8.2.1 初始化完成，支持图片URL匹配');
     
 })();
