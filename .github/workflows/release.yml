@@ -1,0 +1,109 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'V*'   # 推送以大写 V 开头的标签时触发，如 V8.2.1
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v4
+        with:
+          path: main
+          ref: main
+
+      - name: Checkout for-win7 branch
+        uses: actions/checkout@v4
+        with:
+          path: win7
+          ref: for-win7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies (main)
+        run: |
+          cd main
+          npm ci
+
+      - name: Build main branch
+        run: |
+          cd main
+          npm run build:win
+          npm run build:win32
+          npm run build:portable
+          npm run build:portable32
+
+      - name: Install dependencies (for-win7)
+        run: |
+          cd win7
+          npm ci
+
+      - name: Build for-win7 branch
+        run: |
+          cd win7
+          npm run build:win
+          npm run build:win32
+          npm run build:portable
+          npm run build:portable32
+
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path artifacts -Force
+          if (Test-Path main/dist) {
+            Get-ChildItem -Path main/dist -Filter *.exe -File | ForEach-Object {
+              Copy-Item $_.FullName artifacts/
+            }
+          }
+          if (Test-Path win7/dist) {
+            Get-ChildItem -Path win7/dist -Filter *.exe -File | ForEach-Object {
+              Copy-Item $_.FullName artifacts/
+            }
+          }
+
+      - name: Extract changelog from README.md
+        id: changelog
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            // 从标签名中提取版本号，例如 refs/tags/V8.2.1 → 8.2.1
+            const version = context.ref.replace('refs/tags/V', '');
+            const readme = fs.readFileSync('main/README.md', 'utf8');
+            const versionHeaderRegex = new RegExp(`^## \\[${version}\\] - \\d{4}-\\d{2}-\\d{2}$`, 'gm');
+            const match = versionHeaderRegex.exec(readme);
+            if (!match) {
+              core.setFailed(`未在 README.md 中找到版本 ${version} 的更新日志`);
+              return;
+            }
+            const headerIndex = match.index;
+            const nextHeaderRegex = /^## /gm;
+            nextHeaderRegex.lastIndex = headerIndex + match[0].length;
+            const nextMatch = nextHeaderRegex.exec(readme);
+            const endIndex = nextMatch ? nextMatch.index : readme.length;
+            const changelog = readme.substring(headerIndex + match[0].length, endIndex).trim();
+            core.setOutput('changelog', changelog);
+
+      - name: Create Release and Upload Assets
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.ref_name }}               # 例如 V8.2.1
+          name: WJX-A-A ${{ github.ref_name }}      # 例如 WJX-A-A V8.2.1
+          body: |
+            wjx-auto-answer ${{ github.ref_name }}
+
+            ${{ steps.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+          artifacts: "artifacts/*.exe"
+          artifactErrorsFailBuild: true
+          allowUpdates: true
+          replacesArtifacts: true
