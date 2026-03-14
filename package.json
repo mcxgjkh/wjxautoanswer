@@ -73,7 +73,7 @@
       ]
     },
     "portable": {
-      "artifactName": "${productName}_${arch}_portable便携版_win7.${ext}",
+      "artifactName": "${productName}_win7_${arch}_portable便携版.${ext}",
       "requestExecutionLevel": "user"
     },
     "nsis": {
@@ -82,7 +82,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "问卷星答题器 ${version}",
-      "artifactName": "${productName}_${arch}_installer安装版_win7.${ext}"
+      "artifactName": "${productName}_win7_${arch}_installer安装版.${ext}"
     },
     "asar": true,
     "compression": "maximum",
