@@ -14,7 +14,8 @@
     "build:standard": "npm run build:win && npm run build:win32",
     "build:portable-all": "npm run build:portable && npm run build:portable32",
     "build:all": "npm run clean && npm run build:portable && npm run build:portable32 && npm run build:win && npm run build:win32",
-    "clean": "rm -rf build"
+    "build:all-noclean": "npm run build:portable && npm run build:portable32 && npm run build:win && npm run build:win32",
+    "clean": "rd /s /q dist"
   },
   "keywords": [
     "问卷星",
