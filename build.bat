@@ -1,11 +1,11 @@
 @echo off
 chcp 65001
-title 问卷星自动作答器 构建器 V7.1.2
+title 问卷星自动作答器 构建器 V8.0.1 Win7版
 setlocal enabledelayedexpansion
 
 color 0a
 echo ========================
-echo 问卷星自动作答器 构建器 V7.1.2
+echo 问卷星自动作答器 构建器 V8.0.1 Win7版
 echo=
 echo 作者：MCXGJKH
 echo ========================
@@ -21,6 +21,30 @@ if !errorlevel!==0 (
 ) else (
     echo 检测到node.js未安装
     echo 下载请访问https://nodejs.org/en/download
+    pause
+    cls
+    exit /b
+)
+echo=
+echo 正在检验electron
+call electron -v
+if !errorlevel!==0 (
+    echo electron环境检测通过
+) else (
+    echo 检测到electron未安装
+    echo 请运行npm install来安装electron和electron-builder
+    pause
+    cls
+    exit /b
+)
+echo=
+echo 正在检验electron-builder
+call electron-builder --version
+if !errorlevel!==0 (
+    echo electron-builder环境检测通过
+) else (
+    echo 检测到electron-builder未安装
+    echo 请运行npm install来安装electron和electron-builder
     pause
     cls
     exit /b
@@ -79,7 +103,6 @@ echo 4=Windows32位免安装绿色版 Windows ia32 portable
 echo 5=Windows全安装包 Windows x64 installer ^& Windows ia32 installer
 echo 6=Windows全免安装绿色版 Windows Windows x64 portable ^& Windows ia32 portable
 echo 7=全部版本 All versions
-echo 8=清理构建目录
 echo=
 set /p userinput=请输入序号：
 if %userinput%==0 (exit /b)
@@ -89,7 +112,14 @@ if %userinput%==3 (npm run build:portable)
 if %userinput%==4 (npm run build:portable32)
 if %userinput%==5 (npm run build:standard)
 if %userinput%==6 (npm run build:portable-all)
-if %userinput%==7 (npm run build:all)
-if %userinput%==8 (npm run clean)
-if %userinput% gtr 8 (echo 输入值非法，请关闭后重试)
+if %userinput%==7 (
+    call npm run build:all
+    if !errorlevel!==0 (
+        echo 构建完成
+    ) else (
+        echo 失败，正在重试
+        npm run build:all-noclean
+    )
+)
+if %userinput% gtr 7 (echo 输入值非法，请关闭后重试)
 pause
