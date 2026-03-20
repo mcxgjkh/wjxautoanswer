@@ -21,7 +21,7 @@ function createMainWindow() {
             webSecurity: false,
             devTools: true
         },
-        title: '问卷星自动答题器 V8.2.1 - By 满城箫管尽开花',
+        title: '问卷星自动答题器 V8.3.1 - By 满城箫管尽开花',
         show: false
     });
 
@@ -34,7 +34,7 @@ function createMainWindow() {
     mainWindow.once('ready-to-show', () => {
         mainWindow.show();
         // 强制设置窗口标题，覆盖页面标题
-        mainWindow.setTitle('问卷星自动答题器 V8.2.1 - By 满城箫管尽开花');
+        mainWindow.setTitle('问卷星自动答题器 V8.3.1 - By 满城箫管尽开花');
         
         // 开发模式下打开DevTools
         if (process.env.NODE_ENV === 'development') {
@@ -104,7 +104,7 @@ function createWjxWindow(config) {
     
     // 构建问卷URL
     const wjxUrl = `https://ks.wjx.com/vm/${config.urlSuffix}`;
-    console.log('V8.2.1 - 加载问卷页面（无痕模式）:', wjxUrl);
+    console.log('V8.3.1 - 加载问卷页面（无痕模式）:', wjxUrl);
     
     wjxWindow.loadURL(wjxUrl);
     
@@ -139,7 +139,7 @@ function createWjxWindow(config) {
             const answerScript = fs.readFileSync(path.join(__dirname, 'answer-script.js'), 'utf-8');
             
             const injectScript = `
-                // 注入配置 V8.2.1
+                // 注入配置 V8.3.1
                 window.ElectronSpeedConfig = ${JSON.stringify(config.speedConfig)};
                 window.ElectronAccuracy = ${config.accuracy / 100};
                 window.ElectronAnswers = ${JSON.stringify(config.answers || {})};
@@ -241,7 +241,7 @@ app.on('window-all-closed', () => {
 
 // IPC通信处理
 ipcMain.handle('open-wjx', async (event, config) => {
-    console.log('V8.2.1 - 打开问卷页面，配置:', {
+    console.log('V8.3.1 - 打开问卷页面，配置:', {
         speed: config.speedConfig.name,
         accuracy: config.accuracy,
         urlSuffix: config.urlSuffix,
@@ -471,15 +471,27 @@ ipcMain.handle('import-banks-from-folder', async (event) => {
         
         const folderPath = filePaths[0];
         const files = await fs.readdir(folderPath);
-        const jsonFiles = files.filter(f => f.toLowerCase().endsWith('.json'));
+        // 同时支持 .json 和 .csv 文件
+        const supportedFiles = files.filter(f => 
+            f.toLowerCase().endsWith('.json') || f.toLowerCase().endsWith('.csv')
+        );
         
         const importedBanks = [];
         
-        for (const fileName of jsonFiles) {
+        for (const fileName of supportedFiles) {
             const filePath = path.join(folderPath, fileName);
+            const ext = path.extname(fileName).toLowerCase();
             try {
                 const fileContent = await fs.readFile(filePath, 'utf-8');
-                const bankData = JSON.parse(fileContent);
+                let bankData;
+                
+                if (ext === '.csv') {
+                    // 使用 CSV 解析函数，传入文件名作为默认题库名
+                    bankData = parseCSVToBank(fileContent, path.basename(fileName, '.csv'));
+                } else {
+                    // JSON 解析
+                    bankData = JSON.parse(fileContent);
+                }
                 
                 if (validateBankData(bankData)) {
                     importedBanks.push({
@@ -487,17 +499,25 @@ ipcMain.handle('import-banks-from-folder', async (event) => {
                         originalPath: filePath,
                         importedAt: new Date().toISOString()
                     });
+                } else {
+                    importedBanks.push({
+                        error: `文件 ${fileName} 格式无效：缺少 name 或 answers`,
+                        path: filePath
+                    });
                 }
             } catch (error) {
-                console.warn(`导入文件 ${fileName} 失败:`, error.message);
+                importedBanks.push({
+                    error: `导入失败: ${error.message}`,
+                    path: filePath
+                });
             }
         }
         
         return { 
             success: true, 
             importedBanks: importedBanks,
-            total: jsonFiles.length,
-            successful: importedBanks.length
+            total: supportedFiles.length,
+            successful: importedBanks.filter(b => !b.error).length
         };
     } catch (error) {
         console.error('批量导入题库失败:', error);

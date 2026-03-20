@@ -1,11 +1,11 @@
 @echo off
 chcp 65001
-title 问卷星自动作答器 构建器 V8.0.1 Win7版
+title 问卷星自动作答器 构建器 V8.0.1
 setlocal enabledelayedexpansion
 
 color 0a
 echo ========================
-echo 问卷星自动作答器 构建器 V8.0.1 Win7版
+echo 问卷星自动作答器 构建器 V8.0.1
 echo=
 echo 作者：MCXGJKH
 echo ========================
