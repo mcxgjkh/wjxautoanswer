@@ -188,6 +188,15 @@ Fork 本仓库
 
 ---
 
+## [8.3.2] - 2026-03-20
+
+### 🔧 修复
+
+- **type匹配**
+  -修复了防作弊问卷无法识别到type的问题，当识别不到时自动转为通用匹配
+
+---
+
 ## [8.3.1] - 2026-03-20
 
 ### ✨ 新增
@@ -413,3 +422,4 @@ Fork 本仓库
 [8.1.3]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.1.3
 [8.2.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.2.1
 [8.3.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.3.1
+[8.3.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.3.2
