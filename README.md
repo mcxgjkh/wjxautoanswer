@@ -3,7 +3,7 @@
 ![版本](https://img.shields.io/badge/版本-8.3.1-blue)
 ![许可证](https://img.shields.io/badge/许可证-AGPLv3-green)
 ![构建](https://img.shields.io/badge/构建-passing-brightgreen)
-![Electron](https://img.shields.io/badge/Electron-28.0.0-blue)
+![Electron](https://img.shields.io/badge/Electron-21.4.4-blue)
 ![Node](https://img.shields.io/badge/Node-16+-green)
 ![平台](https://img.shields.io/badge/平台-Windows%20|%20macOS%20|%20Linux-lightgrey)*（MacOS与Linux请自行修改package.json编译）*
 ![最后提交](https://img.shields.io/badge/最后提交-2026--03--20-orange)
@@ -51,7 +51,7 @@
 
 ## 🛠 技术栈
 
-- **Electron** 28.0.0+  
+- **Electron** 21.4.4 
 - **HTML5 / CSS3**  
 - **Vanilla JavaScript**（无前端框架）  
 - **electron-builder** 打包工具  
