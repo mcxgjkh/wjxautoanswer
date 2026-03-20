@@ -1,5 +1,5 @@
 // ============================
-// V8.2.1 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
+// V8.3.1 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
 // 新增图片URL匹配功能
 // ============================
 
@@ -12,12 +12,12 @@
     const electronAnswers = window.ElectronAnswers || {};
     const electronBasicInfoCount = window.ElectronBasicInfoCount || 2; // 基础信息填写题数，默认2题
     
-    // ==================== 题目匹配配置（V8.2.1新增）====================
+    // ==================== 题目匹配配置（V8.3.1新增）====================
     const matchEnabled = window.ElectronMatchEnabled || false;
     const matchBank = window.ElectronMatchBank || null;
 
-    console.log('V8.2.1 - 题目匹配功能:', matchEnabled ? '启用' : '禁用');
-    console.log('V8.2.1 - 收到的原始配置:');
+    console.log('V8.3.1 - 题目匹配功能:', matchEnabled ? '启用' : '禁用');
+    console.log('V8.3.1 - 收到的原始配置:');
     console.log('  ElectronMatchEnabled:', window.ElectronMatchEnabled);
     console.log('  ElectronMatchBank:', window.ElectronMatchBank);
 
@@ -39,9 +39,9 @@
     }
     // ==================== 题目匹配配置结束 ====================
     
-    console.log('V8.2.1 - 来自Electron的配置:', electronConfig);
-    console.log('V8.2.1 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
-    console.log('V8.2.1 - 基础信息填写题数:', electronBasicInfoCount);
+    console.log('V8.3.1 - 来自Electron的配置:', electronConfig);
+    console.log('V8.3.1 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
+    console.log('V8.3.1 - 基础信息填写题数:', electronBasicInfoCount);
     
     // ==================== 速度配置 ====================
     const SPEED_OPTIONS = [
@@ -288,7 +288,7 @@
         statusBar.className = 'electron-status-bar';
         statusBar.innerHTML = `
             <div class="left">
-                <div class="title">问卷星自动答题器 V8.2.1</div>
+                <div class="title">问卷星自动答题器 V8.3.1</div>
                 <div class="status" id="statusText">准备中...</div>
                 <div class="accuracy-info">正确率: <span class="accuracy-value">${(accuracy * 100).toFixed(0)}%</span></div>
                 <div class="basic-info-count">基础信息: ${electronBasicInfoCount}题</div>
@@ -340,7 +340,7 @@
         }
     }
     
-    // ==================== 答题机器人 V8.2.1（增强版） ====================
+    // ==================== 答题机器人 V8.3.1（增强版） ====================
     class AnswerBot {
         constructor(speedOption, accuracy, basicInfoCount, matchEnabled, matchBank) {
             this.speedOption = speedOption;
@@ -361,7 +361,7 @@
             this.matchEnabled = matchEnabled === true;
             this.matchBank = matchBank || { answers: {}, basicInfoCount: 2, startQuestionNum: 3 };
             
-            console.log(`V8.2.1 - 初始化答题机器人（支持图片URL匹配）`);
+            console.log(`V8.3.1 - 初始化答题机器人（支持图片URL匹配）`);
             console.log(`  速度模式: ${speedOption.name}`);
             console.log(`  目标正确率: ${(accuracy * 100).toFixed(0)}%`);
             console.log(`  基础信息题数: ${basicInfoCount}`);
@@ -621,6 +621,34 @@
             }
             return (2.0 * intersection) / (pairs1.size + pairs2.size);
         }
+
+        // 查找所有匹配的选项（多选）
+        findAllMatchOptions(questionElement, questionNum) {
+            const keywords = ANSWERS[questionNum];
+            if (!keywords || keywords.length === 0) return [];
+
+            const $question = $(questionElement);
+            const allOptions = this.getAllOptions(questionElement);
+            const matchedInputs = [];
+
+            for (const opt of allOptions) {
+                if (this.exactMatch(opt.text, keywords)) {
+                    matchedInputs.push(opt.input);
+                }
+            }
+
+            // 如果通过题号匹配未找到任何选项，尝试图片匹配（图片匹配通常只对应一个选项，暂不支持多图）
+            if (matchedInputs.length === 0) {
+                const matchedImageUrl = matchImageUrl(questionElement, questionNum);
+                if (matchedImageUrl) {
+                    // 可选：实现图片多匹配（如需支持多图，可扩展）
+                    const imageOption = this.findOptionByImageUrl(questionElement, matchedImageUrl);
+                    if (imageOption) matchedInputs.push(imageOption);
+                }
+            }
+
+            return matchedInputs;
+        }
         
         // 查找匹配选项（增强版：支持图片URL匹配 + 题目文本匹配）
         findMatchOption(questionElement, questionNum) {
@@ -750,7 +778,85 @@
             });
             return options;
         }
-        
+
+        // 填空
+        async fillTextInput(questionElement, answer) {
+            const $inputs = $(questionElement).find('input[type="text"], input[type="number"], textarea').filter(':not([type="hidden"])');
+            if ($inputs.length === 0) return false;
+            const answerText = Array.isArray(answer) ? answer[0] : answer;
+            if (!answerText) return false;
+            const $input = $inputs.first();
+            $input.val(answerText);
+            $input.trigger('input');
+            $input.trigger('change');
+            await this.wait(150);
+            return $input.val() === answerText;
+        }
+
+        // 单选
+        async selectRadio(questionElement, answer) {
+            const keywords = Array.isArray(answer) ? answer : [answer];
+            const $radios = $(questionElement).find('input[type="radio"]');
+            for (let i = 0; i < $radios.length; i++) {
+                const $radio = $($radios[i]);
+                const $label = $radio.closest('.ui-radio').find('.label');
+                const optionText = $label.text().trim();
+                if (this.exactMatch(optionText, keywords)) {
+                    await this.ensureSelection($radio[0]);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 多选
+        async selectCheckbox(questionElement, answers) {
+            const keywords = Array.isArray(answers) ? answers : [answers];
+            const $checkboxes = $(questionElement).find('input[type="checkbox"]');
+            let anySelected = false;
+            for (let i = 0; i < $checkboxes.length; i++) {
+                const $checkbox = $($checkboxes[i]);
+                const $label = $checkbox.closest('.ui-checkbox').find('.label');
+                const optionText = $label.text().trim();
+                if (this.exactMatch(optionText, keywords)) {
+                    await this.ensureSelection($checkbox[0]);
+                    anySelected = true;
+                }
+            }
+            return anySelected;
+        }
+
+        // 下拉框
+        async selectDropdown(questionElement, answer) {
+            const keywords = Array.isArray(answer) ? answer : [answer];
+            const $select = $(questionElement).find('select');
+            if ($select.length === 0) return false;
+            const $options = $select.find('option');
+            for (let i = 0; i < $options.length; i++) {
+                const $option = $($options[i]);
+                const optText = $option.text().trim();
+                const optVal = $option.val() || '';
+                if (this.exactMatch(optText, keywords) || this.exactMatch(optVal, keywords)) {
+                    $select.val($option.val());
+                    $select.trigger('change');
+                    await this.wait(150);
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // 确保多个选项被选中（多选）
+        async ensureMultiSelection(inputElements) {
+            if (!inputElements || inputElements.length === 0) return false;
+            let allSelected = true;
+            for (const input of inputElements) {
+                const selected = await this.ensureSelection(input);
+                if (!selected) allSelected = false;
+            }
+            return allSelected;
+        }
+                
         // 确保选择生效
         async ensureSelection(inputElement) {
             if (!inputElement || inputElement === 'image_matched') {
@@ -895,16 +1001,18 @@
             for (const question of questions) {
                 const questionNum = this.getQuestionNum(question);
                 if (!questionNum) continue;
-                if ($(question).attr('type') === '1') continue;
+                const type = $(question).attr('type');      // 获取题型：1填空 3单选 4多选 7下拉
                 allQuestions.push({
                     element: question,
                     number: questionNum,
-                    isBasicInfo: questionNum <= this.basicInfoCount
+                    isBasicInfo: questionNum <= this.basicInfoCount,
+                    type: type
                 });
                 if (questionNum > this.basicInfoCount) {
                     answerableQuestions.push({
                         element: question,
-                        number: questionNum
+                        number: questionNum,
+                        type: type
                     });
                 }
             }
@@ -924,7 +1032,7 @@
                 return 0;
             }
             const targetCorrectCount = Math.ceil(totalAnswerable * this.accuracy);
-            console.log(`V8.2.1 - 正确率计算:`);
+            console.log(`V8.3.1 - 正确率计算:`);
             console.log(`  有效题目数: ${totalAnswerable}题`);
             console.log(`  设定正确率: ${(this.accuracy * 100).toFixed(0)}%`);
             console.log(`  需要正确题数: ceil(${totalAnswerable} × ${this.accuracy}) = ${targetCorrectCount}题`);
@@ -943,31 +1051,99 @@
                 const shouldBeCorrect = this.correctCount < targetCorrectCount || 
                                        (this.correctCount === targetCorrectCount && this.accuracy >= 1);
                 
+                // 在循环内部，获取当前题目的类型
+                const $question = $(question.element);
+                const hasCheckbox = $question.find('input[type="checkbox"]').length > 0;
+                const isMulti = hasCheckbox;  // 有多选框则为多选
+
+                const type = question.type;   // 从 collectAllQuestions 中获取
                 if (shouldBeCorrect) {
-                    const correctOption = this.findMatchOption(question.element, questionNum);
-                    if (correctOption) {
-                        const selected = await this.ensureSelection(correctOption);
-                        if (selected) {
-                            this.completedCount++;
-                            this.correctCount++;
-                            console.log(`  第${questionNum}题: 正确 (${this.correctCount}/${targetCorrectCount})`);
-                        }
+                    let success = false;
+                    if (type === '3') {                     // 单选
+                        success = await this.selectRadio(question.element, ANSWERS[questionNum]);
+                    } else if (type === '4') {              // 多选
+                        success = await this.selectCheckbox(question.element, ANSWERS[questionNum]);
+                    } else if (type === '1') {              // 填空
+                        success = await this.fillTextInput(question.element, ANSWERS[questionNum]);
+                    } else if (type === '7') {              // 下拉
+                        success = await this.selectDropdown(question.element, ANSWERS[questionNum]);
+                    }
+                    if (success) {
+                        this.completedCount++;
+                        this.correctCount++;
+                        console.log(`  第${questionNum}题: 正确`);
                     } else {
                         console.warn(`  第${questionNum}题: 未找到正确答案`);
                     }
                 } else {
-                    const allOptions = this.getAllOptions(question.element);
-                    const correctOption = this.findMatchOption(question.element, questionNum);
-                    const wrongOptions = allOptions.filter(opt => !correctOption || opt.input !== correctOption);
-                    if (wrongOptions.length > 0) {
-                        const randomIndex = Math.floor(Math.random() * wrongOptions.length);
-                        const wrongOption = wrongOptions[randomIndex];
-                        const selected = await this.ensureSelection(wrongOption.input);
-                        if (selected) {
-                            this.completedCount++;
-                            this.errorQuestions.push(questionNum);
-                            console.log(`  第${questionNum}题: 故意选错 (${this.errorQuestions.length}/${shuffledQuestions.length - targetCorrectCount})`);
+                    // 故意选错
+                    let success = false;
+                    if (type === '3') {
+                        const correctAnswer = ANSWERS[questionNum];
+                        const allRadios = $(question.element).find('input[type="radio"]');
+                        const wrongRadios = [];
+                        for (let i = 0; i < allRadios.length; i++) {
+                            const $radio = $(allRadios[i]);
+                            const $label = $radio.closest('.ui-radio').find('.label');
+                            const optionText = $label.text().trim();
+                            if (!this.exactMatch(optionText, correctAnswer)) {
+                                wrongRadios.push(allRadios[i]);
+                            }
                         }
+                        if (wrongRadios.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * wrongRadios.length);
+                            await this.ensureSelection(wrongRadios[randomIndex]);
+                            success = true;
+                        }
+                    } else if (type === '4') {
+                        const correctAnswers = ANSWERS[questionNum];
+                        const allCheckboxes = $(question.element).find('input[type="checkbox"]');
+                        const wrongCheckboxes = [];
+                        for (let i = 0; i < allCheckboxes.length; i++) {
+                            const $checkbox = $(allCheckboxes[i]);
+                            const $label = $checkbox.closest('.ui-checkbox').find('.label');
+                            const optionText = $label.text().trim();
+                            if (!this.exactMatch(optionText, correctAnswers)) {
+                                wrongCheckboxes.push(allCheckboxes[i]);
+                            }
+                        }
+                        if (wrongCheckboxes.length > 0) {
+                            const randomIndex = Math.floor(Math.random() * wrongCheckboxes.length);
+                            await this.ensureSelection(wrongCheckboxes[randomIndex]);
+                            success = true;
+                        }
+                    } else if (type === '1') {
+                        // 填空故意填错：可自定义错误内容，此处简单填 "错误答案"
+                        await this.fillTextInput(question.element, "错误答案");
+                        success = true;
+                    } else if (type === '7') {
+                        const correctAnswer = ANSWERS[questionNum];
+                        const $select = $(question.element).find('select');
+                        if ($select.length) {
+                            const $options = $select.find('option');
+                            const wrongOptions = [];
+                            for (let i = 0; i < $options.length; i++) {
+                                const $option = $($options[i]);
+                                const optText = $option.text().trim();
+                                const optVal = $option.val() || '';
+                                if (!this.exactMatch(optText, correctAnswer) && !this.exactMatch(optVal, correctAnswer)) {
+                                    wrongOptions.push($option);
+                                }
+                            }
+                            if (wrongOptions.length > 0) {
+                                const randomIndex = Math.floor(Math.random() * wrongOptions.length);
+                                const $wrongOpt = wrongOptions[randomIndex];
+                                $select.val($wrongOpt.val());
+                                $select.trigger('change');
+                                await this.wait(150);
+                                success = true;
+                            }
+                        }
+                    }
+                    if (success) {
+                        this.completedCount++;
+                        this.errorQuestions.push(questionNum);
+                        console.log(`  第${questionNum}题: 故意选错`);
                     } else {
                         console.warn(`  第${questionNum}题: 无法找到错误选项，跳过`);
                     }
@@ -976,7 +1152,7 @@
             }
             
             const actualAccuracy = this.correctCount / totalAnswerable;
-            console.log(`V8.2.1 - 答题完成:`);
+            console.log(`V8.3.1 - 答题完成:`);
             console.log(`  总共答题: ${this.completedCount}题`);
             console.log(`  正确答题: ${this.correctCount}题`);
             console.log(`  错误答题: ${this.errorQuestions.length}题`);
@@ -1006,7 +1182,7 @@
             const targetAccuracy = (this.accuracy * 100).toFixed(0);
             const actualAccuracyPercent = (actualAccuracy * 100).toFixed(1);
             const confirmed = confirm(
-                `V8.2.1 - 答题完成！\n\n` +
+                `V8.3.1 - 答题完成！\n\n` +
                 `题库统计:\n` +
                 `  总题目: ${this.allQuestions.length}题\n` +
                 `  基础信息: ${this.basicInfoCount}题\n` +
@@ -1079,7 +1255,7 @@
             console.log('答题正在进行中...');
             return;
         }
-        console.log('V8.2.1 - 启动自动答题...');
+        console.log('V8.3.1 - 启动自动答题...');
         console.log(`运行在Electron中，速度: ${selectedSpeed.name}, 正确率: ${(accuracy * 100).toFixed(0)}%`);
         isRunning = true;
         updateStatus('正在启动...', 0);
@@ -1093,7 +1269,7 @@
     
     // ==================== 初始化 ====================
     function init() {
-        console.log('答题脚本 V8.2.1 已加载');
+        console.log('答题脚本 V8.3.1 已加载');
         console.log('正在初始化...');
         const answerKeys = Object.keys(ANSWERS);
         if (answerKeys.length === 0) {
@@ -1145,6 +1321,6 @@
         setTimeout(init, 100);
     }
     
-    console.log('Electron版答题脚本 V8.2.1 初始化完成，支持图片URL匹配');
+    console.log('Electron版答题脚本 V8.3.1 初始化完成，支持图片URL匹配');
     
 })();

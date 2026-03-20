@@ -1,12 +1,12 @@
 # 问卷星自动答题器
 
-![版本](https://img.shields.io/badge/版本-8.2.1-blue)
+![版本](https://img.shields.io/badge/版本-8.3.1-blue)
 ![许可证](https://img.shields.io/badge/许可证-AGPLv3-green)
 ![构建](https://img.shields.io/badge/构建-passing-brightgreen)
 ![Electron](https://img.shields.io/badge/Electron-28.0.0-blue)
 ![Node](https://img.shields.io/badge/Node-16+-green)
 ![平台](https://img.shields.io/badge/平台-Windows%20|%20macOS%20|%20Linux-lightgrey)*（MacOS与Linux请自行修改package.json编译）*
-![最后提交](https://img.shields.io/badge/最后提交-2026--03--14-orange)
+![最后提交](https://img.shields.io/badge/最后提交-2026--03--20-orange)
 ![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
 **问卷星自动答题器** 是一款基于 Electron 的跨平台桌面应用程序，专为问卷星平台（也兼容其他的）设计，提供智能题库管理、题目文本匹配、图片URL识别、正确率控制及多档速度调节等功能。本项目仅用于学习研究，请勿用于非法用途。
@@ -17,8 +17,15 @@
 
 - ✅ **题库管理**  
   - 创建、编辑、删除题库（支持自定义基础信息题数、起始题号）  
-  - 批量导入/导出题库（JSON / CSV 格式）  
+  - 批量导入/导出题库（JSON / CSV 格式，支持多文件选择）  
   - 自动容量扩展（每100行扩展一次，最大1000题）  
+  - **支持多答案格式**：使用 `^` 分隔多个答案（如 `选项1^选项2^选项3`）  
+
+- ✅ **多题型支持**  
+  - **单选题**：根据题库答案自动匹配并选中  
+  - **多选题**：支持同时选中多个答案（题库中用 `^` 分隔）  
+  - **填空题**：自动填写文本答案  
+  - **下拉框**：自动选择匹配的选项  
 
 - ✅ **智能题目匹配**  
   - **传统题号匹配**：根据元素ID定位题目  
@@ -91,7 +98,7 @@ npm start
 ### Windows 打包
 执行根目录下的 build.bat 脚本：
 
-```batch
+```bash
 build.bat
 ```
 打包后的可执行文件及安装包将生成在 dist/ 目录下。
@@ -114,10 +121,12 @@ build.bat
 
 在编辑区逐行输入答案（主题库）或题目文本（匹配库）
 
+**多答案格式**：使用 `^` 分隔多个答案，例如 `选项1^选项2^选项3`
+
 保存后自动存储至浏览器本地存储（localStorage）
 
 导入/导出
-支持 JSON 格式导入导出
+支持 JSON 格式导入导出，支持多文件批量导入
 
 导出时可选择 CSV 格式，便于 Excel 编辑
 
@@ -176,6 +185,63 @@ Fork 本仓库
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，  
 版本号遵循 [语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。
+
+---
+
+## [8.3.1] - 2026-03-20
+
+### ✨ 新增
+
+- **完整多题型支持**
+  - 根据问卷星页面元素的 `type` 属性自动识别题型（1=填空，3=单选，4=多选，7=下拉框）
+  - 新增 `fillTextInput` 方法处理填空题，自动填写文本内容
+  - 新增 `selectRadio` 方法处理单选题，精确匹配选项
+  - 新增 `selectCheckbox` 方法处理多选题，支持同时选中多个答案
+  - 新增 `selectDropdown` 方法处理下拉框，自动匹配并选中选项
+
+- **题库多答案格式支持**
+  - 编辑题库时，支持使用 `^` 分隔多个答案（例如 `A.室内^B.楼道^C.楼梯间`）
+  - 答题时自动将多答案数组应用于多选题，同时勾选所有匹配选项
+  - 单选题中若题库包含多个答案（如 `A.正确^B.错误`），会依次匹配，命中第一个即停止
+
+- **批量导入增强**
+  - 导入题库时支持多文件选择（按住 Ctrl 或 Shift 多选 JSON/CSV 文件）
+  - 文件夹批量导入现同时支持 `.json` 和 `.csv` 文件，自动识别格式并解析
+  - 导入前展示预览窗口，可查看所有待导入题库的详细信息，支持覆盖或重命名策略
+
+### 🔧 修复
+
+- **基础信息题识别**
+  - 修正 `collectAllQuestions` 方法，不再跳过 `type=1` 的题目，确保基础信息题能被正确填充
+
+- **故意选错逻辑**
+  - 多选题目故意选错时，从非正确答案中随机选择一个错误选项，避免勾选正确答案
+  - 填空题目故意选错时，自动填写“错误答案”作为占位
+  - 下拉框故意选错时，从非正确答案的下拉选项中随机选择一个
+
+- **题目文本匹配优先级**
+  - 题目文本匹配成功后直接返回，不再执行传统题号匹配，避免答案被覆盖
+  - 图片URL匹配与文本匹配独立，互不干扰
+
+### 🎨 优化
+
+- **题型识别逻辑**
+  - 通过 `$(question).attr('type')` 直接获取题型，避免依赖元素结构变化
+  - 答题循环中根据题型分发到对应处理方法，代码结构更清晰
+
+- **选项匹配精度**
+  - 多选题的 `findAllMatchOptions` 方法遍历所有复选框，根据 `exactMatch` 精确匹配
+  - 支持答案数组与选项文本的模糊匹配（忽略前缀字母、标点等）
+
+- **用户体验**
+  - 导入题库时若用户取消选择，不再显示错误提示，静默退出
+  - 错误文件在预览中显示红色标记，不影响其他文件的导入
+  - 增加题型识别日志输出，便于调试
+
+### 📝 文档
+
+- 更新 README，补充多题型支持说明和多答案格式示例
+- 完善导入导出功能的使用说明
 
 ---
 
@@ -346,3 +412,4 @@ Fork 本仓库
 [8.1.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.1.2
 [8.1.3]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.1.3
 [8.2.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.2.1
+[8.3.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.3.1
