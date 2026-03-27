@@ -188,6 +188,15 @@ Fork 本仓库
 
 ---
 
+## [8.4.3] - 2026-03-27
+
+### 🔧 修复
+
+- **答题bug**
+  -修复了一些已知问题
+
+---
+
 ## [8.4.2] - 2026-03-27
 
 ### ✨ 新增
@@ -442,3 +451,4 @@ Fork 本仓库
 [8.3.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.3.1
 [8.3.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.3.2
 [8.4.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.4.2
+[8.4.3]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.4.3
