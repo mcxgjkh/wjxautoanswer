@@ -1,5 +1,5 @@
 // ============================
-// V8.4.2 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
+// V8.4.3 智能识别，修复选中，题库管理，正确率控制 Design By MCXGJKH
 // 新增图片URL匹配功能
 // ============================
 
@@ -12,12 +12,12 @@
     const electronAnswers = window.ElectronAnswers || {};
     const electronBasicInfoCount = window.ElectronBasicInfoCount || 2; // 基础信息填写题数，默认2题
     
-    // ==================== 题目匹配配置（V8.4.2新增）====================
+    // ==================== 题目匹配配置（V8.4.3新增）====================
     const matchEnabled = window.ElectronMatchEnabled || false;
     const matchBank = window.ElectronMatchBank || null;
 
-    console.log('V8.4.2 - 题目匹配功能:', matchEnabled ? '启用' : '禁用');
-    console.log('V8.4.2 - 收到的原始配置:');
+    console.log('V8.4.3 - 题目匹配功能:', matchEnabled ? '启用' : '禁用');
+    console.log('V8.4.3 - 收到的原始配置:');
     console.log('  ElectronMatchEnabled:', window.ElectronMatchEnabled);
     console.log('  ElectronMatchBank:', window.ElectronMatchBank);
 
@@ -39,9 +39,9 @@
     }
     // ==================== 题目匹配配置结束 ====================
     
-    console.log('V8.4.2 - 来自Electron的配置:', electronConfig);
-    console.log('V8.4.2 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
-    console.log('V8.4.2 - 基础信息填写题数:', electronBasicInfoCount);
+    console.log('V8.4.3 - 来自Electron的配置:', electronConfig);
+    console.log('V8.4.3 - 正确率设置:', (accuracy * 100).toFixed(0) + '%');
+    console.log('V8.4.3 - 基础信息填写题数:', electronBasicInfoCount);
     
     // ==================== 速度配置 ====================
     const SPEED_OPTIONS = [
@@ -288,7 +288,7 @@
         statusBar.className = 'electron-status-bar';
         statusBar.innerHTML = `
             <div class="left">
-                <div class="title">问卷星自动答题器 V8.4.2</div>
+                <div class="title">问卷星自动答题器 V8.4.3</div>
                 <div class="status" id="statusText">准备中...</div>
                 <div class="accuracy-info">正确率: <span class="accuracy-value">${(accuracy * 100).toFixed(0)}%</span></div>
                 <div class="basic-info-count">基础信息: ${electronBasicInfoCount}题</div>
@@ -340,7 +340,7 @@
         }
     }
     
-    // ==================== 答题机器人 V8.4.2（增强版） ====================
+    // ==================== 答题机器人 V8.4.3（增强版） ====================
     class AnswerBot {
         constructor(speedOption, accuracy, basicInfoCount, matchEnabled, matchBank) {
             this.speedOption = speedOption;
@@ -361,7 +361,7 @@
             this.matchEnabled = matchEnabled === true;
             this.matchBank = matchBank || { answers: {}, basicInfoCount: 2, startQuestionNum: 3 };
             
-            console.log(`V8.4.2 - 初始化答题机器人（支持图片URL匹配）`);
+            console.log(`V8.4.3 - 初始化答题机器人（支持图片URL匹配）`);
             console.log(`  速度模式: ${speedOption.name}`);
             console.log(`  目标正确率: ${(accuracy * 100).toFixed(0)}%`);
             console.log(`  基础信息题数: ${basicInfoCount}`);
@@ -437,8 +437,14 @@
         exactMatch(text, keywords) {
             if (!text || !keywords) return false;
             const cleanText = text.trim().toLowerCase();
-            for (const keyword of keywords) {
-                if (!keyword) continue;
+            for (let keyword of keywords) {
+                if (keyword == null) continue; // 跳过 null/undefined
+                // 如果 keyword 是数组，取其第一个元素（常见情况）
+                while (Array.isArray(keyword)) {
+                    keyword = keyword[0];
+                    if (keyword == null) break;
+                }
+                if (typeof keyword !== 'string') continue; // 跳过非字符串
                 const cleanKeyword = keyword.trim().toLowerCase();
                 if (cleanText === cleanKeyword) return true;
                 const textWithoutPrefix = cleanText.replace(/^[a-d]\s*[\.、]?\s*/i, '').trim();
@@ -488,24 +494,26 @@
                 }
             }
 
-            // 第二步：原有的文本匹配逻辑（提取题干文本并清理，进行绝对匹配和相似度匹配）
-            // 以下代码保持不变（从原始方法中复制）
+            // 第二步：文本匹配逻辑（优化提取，避免重复）
             const $question = $(questionElement);
             let rawQuestionText = '';
 
-            // 尝试多种可能包含题干的容器
-            const possibleContainers = [
-                '.field-label',
-                '.topichtml',
-                '.topic-title',
-                '.question-title'
-            ];
-
-            for (const selector of possibleContainers) {
-                rawQuestionText = $question.find(selector).text().trim();
-                if (rawQuestionText) break;
+            // 优先使用 .field-label（它通常包含完整题目）
+            rawQuestionText = $question.find('.field-label').text().trim();
+            if (!rawQuestionText) {
+                // 如果 .field-label 为空，尝试其他可能的容器
+                const possibleContainers = [
+                    '.topichtml',
+                    '.topic-title',
+                    '.question-title'
+                ];
+                for (const selector of possibleContainers) {
+                    rawQuestionText = $question.find(selector).text().trim();
+                    if (rawQuestionText) break;
+                }
             }
 
+            // 如果仍然没有，使用回退方案（原有的 children 和 clone 逻辑）
             if (!rawQuestionText) {
                 const $fieldLabel = $question.children('.field-label');
                 if ($fieldLabel.length) {
@@ -794,9 +802,24 @@
         }
 
         // 单选
-        async selectRadio(questionElement, answer) {
-            // 专用方法：从题库获取正确答案并尝试匹配单选按钮
-            const keywords = Array.isArray(answer) ? answer : [answer];
+        async selectRadio(questionElement, targetQuestionNum) {
+            // 从主题库获取答案数组
+            let keywords = ANSWERS[targetQuestionNum];
+            if (!keywords) return false;
+
+            // 规范化 keywords：确保它是字符串数组（处理可能的嵌套）
+            if (!Array.isArray(keywords)) keywords = [keywords];
+            // 如果第一项是数组，展平一层
+            while (keywords.length > 0 && Array.isArray(keywords[0])) {
+                keywords = keywords[0];
+                if (!Array.isArray(keywords)) keywords = [keywords];
+            }
+            // 过滤掉非字符串项
+            keywords = keywords.filter(k => typeof k === 'string');
+            if (keywords.length === 0) return false;
+
+            console.log(`selectRadio 题号 ${targetQuestionNum}, 答案数组:`, keywords);
+
             const $radios = $(questionElement).find('input[type="radio"]');
             for (let i = 0; i < $radios.length; i++) {
                 const $radio = $($radios[i]);
@@ -996,13 +1019,13 @@
         
         // 收集所有题目
         collectAllQuestions() {
-            const questions = $('div.field[type]').toArray();
+            const questions = $('div.field').toArray();  // 改为选择所有 div.field
             const allQuestions = [];
             const answerableQuestions = [];
             for (const question of questions) {
                 const questionNum = this.getQuestionNum(question);
                 if (!questionNum) continue;
-                const type = $(question).attr('type');      // 获取题型
+                const type = $(question).attr('type');      // 可能为 undefined
                 allQuestions.push({
                     element: question,
                     number: questionNum,
@@ -1033,7 +1056,7 @@
                 return 0;
             }
             const targetCorrectCount = Math.ceil(totalAnswerable * this.accuracy);
-            console.log(`V8.4.2 - 正确率计算:`);
+            console.log(`V8.3.2 - 正确率计算:`);
             console.log(`  有效题目数: ${totalAnswerable}题`);
             console.log(`  设定正确率: ${(this.accuracy * 100).toFixed(0)}%`);
             console.log(`  需要正确题数: ceil(${totalAnswerable} × ${this.accuracy}) = ${targetCorrectCount}题`);
@@ -1044,7 +1067,7 @@
             for (let i = 0; i < shuffledQuestions.length; i++) {
                 if (this.isStopped) break;
                 const question = shuffledQuestions[i];
-                const questionNum = question.number;
+                const pageQuestionNum = question.number;   // 页面显示的题号（div编号）
                 this.questionCount++;
                 const progress = 15 + Math.round((this.questionCount / shuffledQuestions.length) * 75);
                 updateStatus(`答题中... (${this.questionCount}/${shuffledQuestions.length})`, progress);
@@ -1052,24 +1075,34 @@
                 const shouldBeCorrect = this.correctCount < targetCorrectCount ||
                                     (this.correctCount === targetCorrectCount && this.accuracy >= 1);
 
+                // 如果启用题目匹配，尝试通过文本匹配获得正确的题号
+                let targetQuestionNum = pageQuestionNum;
+                if (this.matchEnabled) {
+                    const matchedNum = this.matchQuestionText(question.element, pageQuestionNum);
+                    if (matchedNum) {
+                        targetQuestionNum = matchedNum;
+                        console.log(`  文本匹配成功: 页面题号 ${pageQuestionNum} → 实际题号 ${targetQuestionNum}`);
+                    } else {
+                        console.log(`  文本匹配失败，继续使用页面题号 ${pageQuestionNum}`);
+                    }
+                }
+
                 const type = question.type;  // '1','3','4','7' 或 undefined
                 let success = false;
 
                 if (shouldBeCorrect) {
-                    // 第一步：尝试题型专用方法
+                    // 根据题型调用对应的专用方法，使用目标题号
                     if (type === '3') {
-                        success = await this.selectRadio(question.element, ANSWERS[questionNum]);
+                        success = await this.selectRadio(question.element, targetQuestionNum);
                     } else if (type === '4') {
-                        success = await this.selectCheckbox(question.element, ANSWERS[questionNum]);
+                        success = await this.selectCheckbox(question.element, targetQuestionNum);
                     } else if (type === '1') {
-                        success = await this.fillTextInput(question.element, ANSWERS[questionNum]);
+                        success = await this.fillTextInput(question.element, targetQuestionNum);
                     } else if (type === '7') {
-                        success = await this.selectDropdown(question.element, ANSWERS[questionNum]);
-                    }
-
-                    // 第二步：如果专用方法失败，回退到通用匹配
-                    if (!success) {
-                        const correctOption = this.findMatchOption(question.element, questionNum);
+                        success = await this.selectDropdown(question.element, targetQuestionNum);
+                    } else {
+                        // 回退到通用匹配（V8.2.1逻辑）
+                        const correctOption = this.findMatchOption(question.element, targetQuestionNum);
                         if (correctOption) {
                             await this.ensureSelection(correctOption);
                             success = true;
@@ -1079,15 +1112,16 @@
                     if (success) {
                         this.completedCount++;
                         this.correctCount++;
-                        console.log(`  第${questionNum}题: 正确 (${this.correctCount}/${targetCorrectCount})`);
+                        console.log(`  第${pageQuestionNum}题: 正确 (${this.correctCount}/${targetCorrectCount})`);
                     } else {
-                        console.warn(`  第${questionNum}题: 未找到正确答案`);
+                        console.warn(`  第${pageQuestionNum}题: 未找到正确答案`);
                     }
                 } else {
-                    // 故意选错分支
+                    // 故意选错分支（仅当正确率<100%时可能执行）
+                    // 注意：故意选错也应使用目标题号，以保证排除的正确选项是正确的
                     if (type === '3') {
-                        // 单选：从非正确答案中随机选一个
-                        const correctAnswer = ANSWERS[questionNum];
+                        // 单选故意选错：从非正确答案中随机选一个
+                        const correctAnswer = ANSWERS[targetQuestionNum];
                         const allRadios = $(question.element).find('input[type="radio"]');
                         const wrongRadios = [];
                         for (let j = 0; j < allRadios.length; j++) {
@@ -1104,8 +1138,8 @@
                             success = true;
                         }
                     } else if (type === '4') {
-                        // 多选：从非正确答案中随机选一个（只选一个错误项）
-                        const correctAnswers = ANSWERS[questionNum];
+                        // 多选故意选错：从非正确答案中随机选一个（只选一个错误项）
+                        const correctAnswers = ANSWERS[targetQuestionNum];
                         const allCheckboxes = $(question.element).find('input[type="checkbox"]');
                         const wrongCheckboxes = [];
                         for (let j = 0; j < allCheckboxes.length; j++) {
@@ -1123,11 +1157,11 @@
                         }
                     } else if (type === '1') {
                         // 填空故意填错
-                        await this.fillTextInput(question.element, "错误答案");
+                        await this.fillTextInput(question.element, targetQuestionNum);
                         success = true;
                     } else if (type === '7') {
                         // 下拉框故意选错
-                        const correctAnswer = ANSWERS[questionNum];
+                        const correctAnswer = ANSWERS[targetQuestionNum];
                         const $select = $(question.element).find('select');
                         if ($select.length) {
                             const $options = $select.find('option');
@@ -1149,12 +1183,10 @@
                                 success = true;
                             }
                         }
-                    }
-
-                    // 如果专用方法失败，回退到通用故意选错逻辑
-                    if (!success) {
+                    } else {
+                        // 回退到通用故意选错逻辑
                         const allOptions = this.getAllOptions(question.element);
-                        const correctOption = this.findMatchOption(question.element, questionNum);
+                        const correctOption = this.findMatchOption(question.element, targetQuestionNum);
                         const wrongOptions = allOptions.filter(opt => !correctOption || opt.input !== correctOption);
                         if (wrongOptions.length > 0) {
                             const randomIndex = Math.floor(Math.random() * wrongOptions.length);
@@ -1166,10 +1198,10 @@
 
                     if (success) {
                         this.completedCount++;
-                        this.errorQuestions.push(questionNum);
-                        console.log(`  第${questionNum}题: 故意选错 (${this.errorQuestions.length}/${shuffledQuestions.length - targetCorrectCount})`);
+                        this.errorQuestions.push(pageQuestionNum);
+                        console.log(`  第${pageQuestionNum}题: 故意选错 (${this.errorQuestions.length}/${shuffledQuestions.length - targetCorrectCount})`);
                     } else {
-                        console.warn(`  第${questionNum}题: 无法找到错误选项，跳过`);
+                        console.warn(`  第${pageQuestionNum}题: 无法找到错误选项，跳过`);
                     }
                 }
 
@@ -1177,7 +1209,7 @@
             }
 
             const actualAccuracy = this.correctCount / totalAnswerable;
-            console.log(`V8.4.2 - 答题完成:`);
+            console.log(`V8.3.2 - 答题完成:`);
             console.log(`  总共答题: ${this.completedCount}题`);
             console.log(`  正确答题: ${this.correctCount}题`);
             console.log(`  错误答题: ${this.errorQuestions.length}题`);
@@ -1207,7 +1239,7 @@
             const targetAccuracy = (this.accuracy * 100).toFixed(0);
             const actualAccuracyPercent = (actualAccuracy * 100).toFixed(1);
             const confirmed = confirm(
-                `V8.4.2 - 答题完成！\n\n` +
+                `V8.4.3 - 答题完成！\n\n` +
                 `题库统计:\n` +
                 `  总题目: ${this.allQuestions.length}题\n` +
                 `  基础信息: ${this.basicInfoCount}题\n` +
@@ -1280,7 +1312,7 @@
             console.log('答题正在进行中...');
             return;
         }
-        console.log('V8.4.2 - 启动自动答题...');
+        console.log('V8.4.3 - 启动自动答题...');
         console.log(`运行在Electron中，速度: ${selectedSpeed.name}, 正确率: ${(accuracy * 100).toFixed(0)}%`);
         isRunning = true;
         updateStatus('正在启动...', 0);
@@ -1294,7 +1326,7 @@
     
     // ==================== 初始化 ====================
     function init() {
-        console.log('答题脚本 V8.4.2 已加载');
+        console.log('答题脚本 V8.4.3 已加载');
         console.log('正在初始化...');
         const answerKeys = Object.keys(ANSWERS);
         if (answerKeys.length === 0) {
@@ -1346,6 +1378,6 @@
         setTimeout(init, 100);
     }
     
-    console.log('Electron版答题脚本 V8.4.2 初始化完成，支持图片URL匹配');
+    console.log('Electron版答题脚本 V8.4.3 初始化完成，支持图片URL匹配');
     
 })();

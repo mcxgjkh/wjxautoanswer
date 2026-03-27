@@ -1,6 +1,6 @@
 # 问卷星自动答题器
 
-![版本](https://img.shields.io/badge/版本-8.4.2-blue)
+![版本](https://img.shields.io/badge/版本-8.4.3-blue)
 ![许可证](https://img.shields.io/badge/许可证-AGPLv3-green)
 ![构建](https://img.shields.io/badge/构建-passing-brightgreen)
 ![Electron](https://img.shields.io/badge/Electron-21.4.4-blue)
@@ -185,6 +185,15 @@ Fork 本仓库
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，  
 版本号遵循 [语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。
+
+---
+
+## [8.4.3] - 2026-03-27
+
+### 🔧 修复
+
+- **答题bug**
+  -修复了一些已知问题
 
 ---
 
@@ -441,3 +450,5 @@ Fork 本仓库
 [8.2.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.2.1
 [8.3.1]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.3.1
 [8.3.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.3.2
+[8.4.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.4.2
+[8.4.3]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.4.3
