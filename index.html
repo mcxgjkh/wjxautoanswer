@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>问卷星自动答题器 V8.3.2</title>
+    <title>问卷星自动答题器 V8.4.2</title>
     <style>
         /* 美化滚动条样式 */
         ::-webkit-scrollbar {
@@ -901,7 +901,7 @@
     <div class="container">
         <div class="header">
             <h1>问卷星自动答题器</h1>
-            <div class="subtitle">V8.3.2 智能识别 | 题库管理版</div>
+            <div class="subtitle">V8.4.2 智能识别 | 题库管理版</div>
             <div class="version">Design By MCXGJKH</div>
         </div>
         
@@ -1180,7 +1180,7 @@
         </div>
         
         <div class="footer">
-            © 2026 MCXGJKH | 问卷星自动答题器 V8.3.2
+            © 2026 MCXGJKH | 问卷星自动答题器 V8.4.2
         </div>
     </div>
 
@@ -1358,7 +1358,6 @@
                         <div style="color: #FF9800; margin-bottom: 10px; font-size: 14px;">为确认删除，请在下方输入框中输入题库名称：</div>
                         <input type="text" id="confirmDeleteInput" style="width: 100%; padding: 15px; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); border-radius: 8px; color: white; font-size: 16px; text-align: center;" placeholder="请输入题库名称以确认删除">
                     </div>
-                    <div style="color: #888; font-size: 12px; margin-top: 15px;">提示：输入正确的题库名称后，删除按钮才会激活</div>
                 </div>
             </div>
             <div class="modal-actions" style="justify-content: center;">
@@ -1673,7 +1672,7 @@
                 ]
             },
             "exportInfo": {
-                "version": "V8.3.2",
+                "version": "V8.4.2",
                 "exportedAt": "2026-03-20T11:25:46.958Z",
                 "totalQuestions": 42,
                 "basicInfoCount": 2
@@ -1719,7 +1718,7 @@
                     showShortcutNotification('F12: 打开/关闭开发者工具');
                 }
             });
-            log('程序初始化完成 V8.3.2', 'success');
+            log('程序初始化完成 V8.4.2', 'success');
         });
 
         // ==================== 原有辅助函数 ====================
@@ -1729,7 +1728,7 @@
                 const shortcutLog = document.createElement('div');
                 shortcutLog.className = 'log info';
                 shortcutLog.innerHTML = `
-                    <strong>V8.3.2 快捷键说明：</strong><br>
+                    <strong>V8.4.2 快捷键说明：</strong><br>
                     • <b>F12</b>: 打开/关闭开发者工具（如无效请检查系统设置）<br>
                     • <b>Ctrl+Shift+I</b>: 打开/关闭开发者工具（备用）<br>
                     • <b>F5/Ctrl+R</b>: 刷新当前页面<br>
@@ -2463,7 +2462,7 @@
                     basicInfoCount: bank.basicInfoCount || 2,
                     startQuestionNum: bank.startQuestionNum || 3,
                     answers: bank.answers,
-                    exportInfo: { version: 'V8.3.2', exportedAt: new Date().toISOString(), totalQuestions, basicInfoCount: bank.basicInfoCount || 2 }
+                    exportInfo: { version: 'V8.4.2', exportedAt: new Date().toISOString(), totalQuestions, basicInfoCount: bank.basicInfoCount || 2 }
                 });
                 if (result.success) {
                     const sizeInKB = (result.size / 1024).toFixed(2);
@@ -2552,12 +2551,13 @@
             `;
             const validBanks = importedBanks.filter(b => !b.error);
             if (validBanks.length > 0) {
-                html += `<div style="margin-bottom: 15px;"><h5 style="color: #4CAF50;">✅ 可导入的题库</h5>`;
+                html += `<div style="margin-bottom: 15px;"><h5 style="color: #4CAF50;">可导入的题库</h5>`;
                 validBanks.forEach((bank, index) => {
                     const answers = bank.answers || {};
                     const totalQuestions = Object.keys(answers).length;
                     const basicInfoCount = bank.basicInfoCount || 0;
                     const validQuestions = Math.max(0, totalQuestions - basicInfoCount);
+                    const fileName = (bank.originalPath || '未知').split(/[\\/]/).pop();
                     html += `
                         <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -2569,7 +2569,7 @@
                                 <div>基础信息: ${basicInfoCount}题</div>
                                 <div>有效题目: ${validQuestions}题</div>
                             </div>
-                            <div style="margin-top: 10px; font-size: 11px; color: #666;">来源: ${path.basename(bank.originalPath || '未知')}</div>
+                            <div style="margin-top: 10px; font-size: 11px; color: #666;">来源: ${fileName}</div>
                         </div>
                     `;
                 });
@@ -2577,11 +2577,12 @@
             }
             const failedBanks = importedBanks.filter(b => b.error);
             if (failedBanks.length > 0) {
-                html += `<div style="margin-bottom: 15px;"><h5 style="color: #f44336;">❌ 导入失败</h5>`;
+                html += `<div style="margin-bottom: 15px;"><h5 style="color: #f44336;">导入失败</h5>`;
                 failedBanks.forEach((bank, index) => {
+                    const fileName = (bank.path || '未知文件').split(/[\\/]/).pop();
                     html += `
                         <div style="background: rgba(244, 67, 54, 0.1); padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #f44336;">
-                            <div style="color: #f44336; font-weight: bold; margin-bottom: 5px;">${path.basename(bank.path || '未知文件')}</div>
+                            <div style="color: #f44336; font-weight: bold; margin-bottom: 5px;">${fileName}</div>
                             <div style="color: #FF9800; font-size: 13px;">${bank.error}</div>
                         </div>
                     `;
@@ -2589,22 +2590,22 @@
                 html += `</div>`;
             }
             html += `
-                    </div>
-                </div>
-                <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-top: 20px;">
-                    <h5 style="color: #8a8aff; margin-bottom: 10px;">导入选项</h5>
-                    <div style="display: flex; gap: 15px; align-items: center;">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="overwriteExisting" style="width: 18px; height: 18px;">
-                            <span>覆盖同名题库</span>
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="renameIfExists" checked style="width: 18px; height: 18px;">
-                            <span>重命名同名题库</span>
-                        </label>
-                    </div>
-                </div>
-            `;
+                            </div>
+                        </div>
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-top: 20px;">
+                            <h5 style="color: #8a8aff; margin-bottom: 10px;">导入选项</h5>
+                            <div style="display: flex; gap: 15px; align-items: center;">
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="overwriteExisting" style="width: 18px; height: 18px;">
+                                    <span>覆盖同名题库</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="renameIfExists" checked style="width: 18px; height: 18px;">
+                                    <span>重命名同名题库</span>
+                                </label>
+                            </div>
+                        </div>
+                    `;
             contentDiv.innerHTML = html;
             window._pendingImportBanks = validBanks;
             document.getElementById('importResultModal').style.display = 'flex';
@@ -2839,7 +2840,7 @@
         
         window.clearLogs = function() { document.getElementById('statusContent').innerHTML = ''; log('日志已清空', 'info'); };
 
-        // ==================== 题目匹配独立模块（V8.3.2新增）====================
+        // ==================== 题目匹配独立模块（V8.4.2新增）====================
         // 存储结构与主题库完全一致：{ name, description, basicInfoCount, startQuestionNum, answers }
         (function(){
             'use strict';
@@ -3267,7 +3268,7 @@
                         startQuestionNum: bank.startQuestionNum || 3,
                         answers: bank.answers || {},
                         exportInfo: {
-                            version: 'V8.3.2',
+                            version: 'V8.4.2',
                             exportedAt: new Date().toISOString(),
                             totalQuestions: total,
                             basicInfoCount: bank.basicInfoCount || 2
@@ -3290,70 +3291,158 @@
                 }
             }
 
-            function importMatchBank() {
-                const input = document.createElement('input');
-                input.type = 'file';
-                input.accept = '.json,.csv,application/json,text/csv';  // 同时支持 JSON 和 CSV
-
-                input.onchange = function(e) {
-                    const file = e.target.files[0];
-                    const reader = new FileReader();
-                    
-                    reader.onload = function(ev) {
-                        try {
-                            const fileContent = ev.target.result;
-                            const fileName = file.name;
-                            const format = fileName.split('.').pop().toLowerCase();
-                            
-                            let bankData;
-                            if (format === 'csv') {
-                                // 复用已有的 CSV 解析函数（数据结构相同）
-                                bankData = parseCSVToBank(fileContent, fileName.replace('.csv', ''));
-                            } else {
-                                bankData = JSON.parse(fileContent);
-                            }
-                            
-                            // 验证题库格式
-                            if (!bankData.name || !bankData.answers || typeof bankData.answers !== 'object') {
-                                showMessageModal('导入失败', '无效的题库文件：缺少 name 或 answers 对象');
-                                return;
-                            }
-                            
-                            // 处理同名题库
-                            let finalName = bankData.name;
-                            if (window.matchQuestionBanks[finalName]) {
-                                let counter = 1;
-                                while (window.matchQuestionBanks[`${finalName} (${counter})`]) counter++;
-                                finalName = `${finalName} (${counter})`;
-                            }
-                            
-                            // 保存题库
-                            window.matchQuestionBanks[finalName] = {
-                                name: finalName,
-                                description: bankData.description || '',
-                                basicInfoCount: bankData.basicInfoCount || 2,
-                                startQuestionNum: bankData.startQuestionNum || 3,
-                                answers: bankData.answers || {}
-                            };
-                            
-                            saveMatchBanks();
-                            window.selectedMatchBank = finalName;
-                            updateMatchBankSelect();
-                            updateMatchBankPreview();
-                            
-                            log(`📥 导入题目匹配库: ${finalName} (${Object.keys(bankData.answers).length}题)`, 'success');
-                            showNotification('导入成功', `题目匹配库 "${finalName}" 已导入`, 'success');
-                            updateMatchCheckboxState();
-                            
-                        } catch(ex) {
-                            showMessageModal('导入失败', '解析失败，请检查文件是否为有效的 JSON 或 CSV 格式');
-                            log(`❌ 导入失败: ${ex.message}`, 'error');
+            async function importMatchBank() {
+                log('准备导入题目匹配库...', 'info');
+                try {
+                    const result = await window.electronAPI.importBank();
+                    if (result.success) {
+                        if (result.importedBanks.length === 0) {
+                            log('未找到有效题库文件', 'warning');
+                            return;
                         }
+                        showMatchImportResults(result.importedBanks, result.successful, result.total);
+                    } else {
+                        // 用户主动取消时不显示错误
+                        if (result.error !== '用户取消操作') {
+                            log(`导入失败: ${result.error}`, 'error');
+                            showMessageModal('导入失败', result.error);
+                        }
+                    }
+                } catch (error) {
+                    log(`导入出错: ${error.message}`, 'error');
+                    showMessageModal('导入出错', error.message);
+                }
+            }
+
+            function showMatchImportResults(importedBanks, successfulCount, totalCount) {
+                const contentDiv = document.getElementById('importResultContent');
+                let html = `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #8a8aff;">导入结果</h4>
+                        <p>成功导入: <span style="color: #4CAF50; font-weight: bold;">${successfulCount}</span> 个题目匹配库</p>
+                        <p>总计: ${totalCount} 个文件</p>
+                        ${successfulCount < totalCount ? `<p style="color: #FF9800;">${totalCount - successfulCount} 个文件导入失败或格式无效</p>` : ''}
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="color: #8a8aff;">题库列表</h4>
+                        <div style="max-height: 300px; overflow-y: auto;">
+                `;
+                const validBanks = importedBanks.filter(b => !b.error);
+                if (validBanks.length > 0) {
+                    html += `<div style="margin-bottom: 15px;"><h5 style="color: #4CAF50;">可导入的题目匹配库</h5>`;
+                    validBanks.forEach((bank, index) => {
+                        const answers = bank.answers || {};
+                        const totalQuestions = Object.keys(answers).length;
+                        const basicInfoCount = bank.basicInfoCount || 0;
+                        const validQuestions = Math.max(0, totalQuestions - basicInfoCount);
+                        const fileName = (bank.originalPath || '未知').split(/[\\/]/).pop();
+                        html += `
+                            <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                    <span style="font-weight: bold; font-size: 16px;">${bank.name}</span>
+                                    <span style="background: rgba(76, 175, 80, 0.2); color: #4CAF50; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${totalQuestions}题</span>
+                                </div>
+                                <div style="color: #aaa; font-size: 13px; margin-bottom: 5px;">${bank.description || '暂无描述'}</div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 12px; color: #888;">
+                                    <div>基础信息: ${basicInfoCount}题</div>
+                                    <div>有效题目: ${validQuestions}题</div>
+                                </div>
+                                <div style="margin-top: 10px; font-size: 11px; color: #666;">来源: ${fileName}</div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+                const failedBanks = importedBanks.filter(b => b.error);
+                if (failedBanks.length > 0) {
+                    html += `<div style="margin-bottom: 15px;"><h5 style="color: #f44336;">导入失败</h5>`;
+                    failedBanks.forEach((bank, index) => {
+                        const fileName = (bank.path || '未知文件').split(/[\\/]/).pop();
+                        html += `
+                            <div style="background: rgba(244, 67, 54, 0.1); padding: 10px; border-radius: 6px; margin-bottom: 8px; border-left: 3px solid #f44336;">
+                                <div style="color: #f44336; font-weight: bold; margin-bottom: 5px;">${fileName}</div>
+                                <div style="color: #FF9800; font-size: 13px;">${bank.error}</div>
+                            </div>
+                        `;
+                    });
+                    html += `</div>`;
+                }
+                html += `
+                                </div>
+                            </div>
+                            <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-top: 20px;">
+                                <h5 style="color: #8a8aff; margin-bottom: 10px;">导入选项</h5>
+                                <div style="display: flex; gap: 15px; align-items: center;">
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="matchOverwriteExisting" style="width: 18px; height: 18px;">
+                                        <span>覆盖同名题库</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                        <input type="checkbox" id="matchRenameIfExists" checked style="width: 18px; height: 18px;">
+                                        <span>重命名同名题库</span>
+                                    </label>
+                                </div>
+                            </div>
+                        `;
+                contentDiv.innerHTML = html;
+                window._pendingMatchImportBanks = validBanks;
+                document.getElementById('importResultModal').style.display = 'flex';
+                // 重新绑定确认按钮的事件（原来绑定的可能是主题库的，这里需要切换）
+                const confirmBtn = document.getElementById('confirmImportBtn');
+                // 移除原有事件，重新绑定
+                const newConfirmBtn = confirmBtn.cloneNode(true);
+                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+                newConfirmBtn.addEventListener('click', confirmMatchImportBanks);
+            }
+
+            function confirmMatchImportBanks() {
+                const pendingBanks = window._pendingMatchImportBanks || [];
+                const overwriteExisting = document.getElementById('matchOverwriteExisting').checked;
+                const renameIfExists = document.getElementById('matchRenameIfExists').checked;
+                let importedCount = 0, skippedCount = 0, renamedCount = 0, overwrittenCount = 0;
+                pendingBanks.forEach(bank => {
+                    let bankName = bank.name;
+                    let finalName = bankName;
+                    if (window.matchQuestionBanks[bankName]) {
+                        if (overwriteExisting) {
+                            finalName = bankName;
+                            overwrittenCount++;
+                        } else if (renameIfExists) {
+                            let newName = bankName;
+                            let counter = 1;
+                            while (window.matchQuestionBanks[newName]) newName = `${bankName} (${counter++})`;
+                            finalName = newName;
+                            renamedCount++;
+                        } else {
+                            log(`跳过已存在的题目匹配库: ${bankName}`, 'warning');
+                            skippedCount++;
+                            return;
+                        }
+                    }
+                    window.matchQuestionBanks[finalName] = {
+                        name: finalName,
+                        description: bank.description || '',
+                        basicInfoCount: bank.basicInfoCount || 2,
+                        startQuestionNum: bank.startQuestionNum || 3,
+                        answers: bank.answers || {}
                     };
-                    reader.readAsText(file);
-                };
-                
-                input.click();
+                    importedCount++;
+                    log(`导入题目匹配库: ${finalName} (${Object.keys(bank.answers || {}).length}题)`, 'success');
+                });
+                saveMatchBanks();
+                updateMatchBankSelect();
+                window.selectedMatchBank = Object.keys(window.matchQuestionBanks)[0] || null;
+                updateMatchBankSelect();
+                updateMatchBankPreview();
+                let summary = `导入完成: ${importedCount}个题目匹配库`;
+                if (skippedCount > 0) summary += `, 跳过${skippedCount}个`;
+                if (renamedCount > 0) summary += `, 重命名${renamedCount}个`;
+                if (overwrittenCount > 0) summary += `, 覆盖${overwrittenCount}个`;
+                log(summary, 'success');
+                showNotification('导入完成', summary, 'success');
+                document.getElementById('importResultModal').style.display = 'none';
+                delete window._pendingMatchImportBanks;
+                updateMatchCheckboxState();
             }
 
             function showMatchBankInfo() {

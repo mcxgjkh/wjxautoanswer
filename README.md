@@ -1,12 +1,12 @@
 # 问卷星自动答题器
 
-![版本](https://img.shields.io/badge/版本-8.3.1-blue)
+![版本](https://img.shields.io/badge/版本-8.4.2-blue)
 ![许可证](https://img.shields.io/badge/许可证-AGPLv3-green)
 ![构建](https://img.shields.io/badge/构建-passing-brightgreen)
 ![Electron](https://img.shields.io/badge/Electron-21.4.4-blue)
 ![Node](https://img.shields.io/badge/Node-16+-green)
 ![平台](https://img.shields.io/badge/平台-Windows%20|%20macOS%20|%20Linux-lightgrey)*（MacOS与Linux请自行修改package.json编译）*
-![最后提交](https://img.shields.io/badge/最后提交-2026--03--20-orange)
+![最后提交](https://img.shields.io/badge/最后提交-2026--03--27-orange)
 ![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
 **问卷星自动答题器** 是一款基于 Electron 的跨平台桌面应用程序，专为问卷星平台（也兼容其他的）设计，提供智能题库管理、题目文本匹配、图片URL识别、正确率控制及多档速度调节等功能。本项目仅用于学习研究，请勿用于非法用途。
@@ -185,6 +185,24 @@ Fork 本仓库
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，  
 版本号遵循 [语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。
+
+---
+
+## [8.4.2] - 2026-03-27
+
+### ✨ 新增
+
+- **题目匹配库导入**
+  -增加了题目匹配库批量导入的功能
+
+---
+
+## 8.4.1 - 2026-03-27
+
+### 🔧 修复
+
+- **题库导入**
+  -修复了题库导入时显示path is no defined的问题
 
 ---
 
