@@ -1,12 +1,12 @@
 # 问卷星自动答题器
 
-![版本](https://img.shields.io/badge/版本-8.4.3-blue)
+![版本](https://img.shields.io/badge/版本-8.6.2-blue)
 ![许可证](https://img.shields.io/badge/许可证-AGPLv3-green)
 ![构建](https://img.shields.io/badge/构建-passing-brightgreen)
 ![Electron](https://img.shields.io/badge/Electron-21.4.4-blue)
 ![Node](https://img.shields.io/badge/Node-16+-green)
 ![平台](https://img.shields.io/badge/平台-Windows%20|%20macOS%20|%20Linux-lightgrey)*（MacOS与Linux请自行修改package.json编译）*
-![最后提交](https://img.shields.io/badge/最后提交-2026--03--27-orange)
+![最后提交](https://img.shields.io/badge/最后提交-2026--04--04-orange)
 ![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)
 
 **问卷星自动答题器** 是一款基于 Electron 的跨平台桌面应用程序，专为问卷星平台（也兼容其他的）设计，提供智能题库管理、题目文本匹配、图片URL识别、正确率控制及多档速度调节等功能。本项目仅用于学习研究，请勿用于非法用途。
@@ -185,6 +185,53 @@ Fork 本仓库
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，  
 版本号遵循 [语义化版本 2.0.0](https://semver.org/lang/zh-CN/)。
+
+---
+
+## [8.6.2] - 2026-04-04
+
+### ✨ 新增
+
+- **导入选项互斥与验证**
+  - 主题库导入：仅在存在重名题库时显示导入选项区域（覆盖/重命名），两个选项互斥（只能选其一）
+  - 题目匹配库导入：同样仅在重名时显示选项区域，互斥选择
+  - 未勾选任何选项时点击确认，右上角弹出红色错误提示“请选择一个导入选项（覆盖或重命名）”，阻止导入
+
+- **拖放导入功能**
+  - 支持将 `.json` 或 `.csv` 题库文件直接拖拽到“题库管理”或“题目匹配”预览卡片区域
+  - 拖拽时卡片显示虚线边框和“拖放导入”文字提示，松开鼠标自动解析文件并打开导入结果窗口
+  - 前端复用主进程的 CSV/JSON 解析逻辑，确保格式兼容
+  - 支持一次拖拽多个文件，批量导入
+
+- **删除成功提示**
+  - 删除主题库或题目匹配库后，右上角弹出绿色成功通知（例如“题库“xxx”已成功删除”）
+  - 提升操作反馈体验
+
+### 🔧 修复
+
+- **导入按钮事件冲突**
+  - 解决主题库导入时误调用 `confirmMatchImportBanks` 导致的 `confirmMatchImportBanks is not defined` 错误
+  - 将 `confirmMatchImportBanks` 暴露到全局，并在调用前检查 `window._pendingMatchImportBanks` 是否存在且非空，避免误触发
+
+- **复选框空值保护**
+  - 在 `confirmMatchImportBanks` 中增加元素存在性检查，避免因元素为 `null` 而抛出 `Cannot read properties of null` 错误
+  - 使用可选链和空值合并确保代码健壮性
+
+### 🎨 优化
+
+- **导入选项显示逻辑**
+  - 重构 `showImportResults` 和 `showMatchImportResults`，提前计算 `validBanks` 和 `hasConflict`
+  - 使用 `getComputedStyle` 判断元素可见性，替代简单的 `style.display` 检查，更可靠
+  - 导入选项区域默认隐藏，仅在检测到重名时显示
+
+- **拖放视觉反馈**
+  - 添加 `.drag-over` 类，拖拽时预览卡片边框高亮、覆盖层透明度变化，提升用户体验
+  - 覆盖层居中显示“拖放导入”文字，支持暗色主题
+
+### 📝 文档
+
+- 更新使用说明，增加拖放导入的操作提示
+- 完善导入选项互斥规则的描述
 
 ---
 
@@ -452,3 +499,4 @@ Fork 本仓库
 [8.3.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.3.2
 [8.4.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.4.2
 [8.4.3]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.4.3
+[8.6.2]: https://github.com/mcxgjkh/wjxautoanswer/releases/tag/V8.6.2
