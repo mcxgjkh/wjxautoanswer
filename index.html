@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>问卷星自动答题器 V8.4.3</title>
+    <title>问卷星自动答题器 V8.4.4</title>
     <style>
         /* 美化滚动条样式 */
         ::-webkit-scrollbar {
@@ -407,6 +407,36 @@
             margin-top: 15px;
             border: 1px solid rgba(255, 255, 255, 0.1);
             word-break: break-word; 
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .drag-drop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(102, 126, 234, 0.804);
+            backdrop-filter: blur(4px);
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #c7d1ff;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 10;
+        }
+        .bank-preview.drag-over .drag-drop-overlay {
+            opacity: 1;
+        }
+        .bank-preview.drag-over {
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
         }
         .bank-header {
             display: flex;
@@ -901,7 +931,7 @@
     <div class="container">
         <div class="header">
             <h1>问卷星自动答题器</h1>
-            <div class="subtitle">V8.4.3 智能识别 | 题库管理版</div>
+            <div class="subtitle">V8.6.2 智能识别 | 题库管理版</div>
             <div class="version">Design By MCXGJKH</div>
         </div>
         
@@ -1048,6 +1078,7 @@
                         <div class="bank-items" id="matchBankItems">
                             <div class="bank-item" style="border-left-color: #ff9800;">暂无题目，请编辑添加</div>
                         </div>
+                        <div class="drag-drop-overlay">拖放导入</div>
                     </div>
                 </div>
                 
@@ -1133,6 +1164,7 @@
                         <div class="bank-items">
                             <div class="bank-item">正在加载题目预览...</div>
                         </div>
+                        <div class="drag-drop-overlay">拖放导入</div>
                     </div>
                 </div>
                 
@@ -1180,7 +1212,7 @@
         </div>
         
         <div class="footer">
-            © 2026 MCXGJKH | 问卷星自动答题器 V8.4.3
+            © 2026 MCXGJKH | 问卷星自动答题器 V8.6.2
         </div>
     </div>
 
@@ -1672,7 +1704,7 @@
                 ]
             },
             "exportInfo": {
-                "version": "V8.4.3",
+                "version": "V8.6.2",
                 "exportedAt": "2026-03-20T11:25:46.958Z",
                 "totalQuestions": 42,
                 "basicInfoCount": 2
@@ -1700,6 +1732,7 @@
             setupEventListeners();
             loadBanksFromStorage();
             loadUrlHistory();
+            initDragDrop();
 
             const defaultUrl = "todc4b3.aspx";
             const defaultTitle = "光谷实验理化生模拟-化学";
@@ -1718,7 +1751,7 @@
                     showShortcutNotification('F12: 打开/关闭开发者工具');
                 }
             });
-            log('程序初始化完成 V8.4.3', 'success');
+            log('程序初始化完成 V8.6.2', 'success');
         });
 
         // ==================== 原有辅助函数 ====================
@@ -1728,7 +1761,7 @@
                 const shortcutLog = document.createElement('div');
                 shortcutLog.className = 'log info';
                 shortcutLog.innerHTML = `
-                    <strong>V8.4.3 快捷键说明：</strong><br>
+                    <strong>V8.6.2 快捷键说明：</strong><br>
                     • <b>F12</b>: 打开/关闭开发者工具（如无效请检查系统设置）<br>
                     • <b>Ctrl+Shift+I</b>: 打开/关闭开发者工具（备用）<br>
                     • <b>F5/Ctrl+R</b>: 刷新当前页面<br>
@@ -2042,6 +2075,144 @@
                     log(`页面加载错误: ${error}`, 'error');
                 });
             }
+        }
+
+        //  拖放导入功能 
+        // 解析文件内容为题库数据
+        async function parseBankFromFileContent(content, fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            let bankData;
+            
+            if (ext === 'csv') {
+                // 简易 CSV 解析
+                const lines = content.split('\n').filter(line => line.trim() !== '');
+                if (lines.length < 6) throw new Error('CSV 格式无效，行数不足');
+                
+                const bankName = lines[0].replace('题库名称: ', '').trim();
+                const description = lines[1].replace('描述: ', '').trim();
+                const basicInfoCount = parseInt(lines[2].replace('基础信息题数: ', '').trim()) || 0;
+                const startQuestionNum = parseInt(lines[3].replace('起始题目编号: ', '').trim()) || 3;
+                
+                const answerLines = lines.slice(6);
+                const answers = {};
+                
+                for (const line of answerLines) {
+                    // 简单 CSV 解析（处理引号内逗号）
+                    const parts = [];
+                    let current = '';
+                    let inQuotes = false;
+                    for (let i = 0; i < line.length; i++) {
+                        const ch = line[i];
+                        if (ch === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (ch === ',' && !inQuotes) {
+                            parts.push(current.trim());
+                            current = '';
+                        } else {
+                            current += ch;
+                        }
+                    }
+                    parts.push(current.trim());
+                    
+                    if (parts.length >= 2) {
+                        const qNum = parts[0].trim();
+                        if (qNum && !isNaN(parseInt(qNum))) {
+                            const mainAnswer = parts[1].replace(/^"|"$/g, '');
+                            if (mainAnswer) {
+                                const answerArray = [mainAnswer];
+                                if (parts.length > 2) {
+                                    const other = parts[2].replace(/^"|"$/g, '');
+                                    if (other) answerArray.push(...other.split(';').map(s => s.trim()).filter(s => s));
+                                }
+                                answers[qNum] = answerArray;
+                            }
+                        }
+                    }
+                }
+                
+                bankData = {
+                    name: bankName || fileName.replace(/\.csv$/i, ''),
+                    description: description,
+                    basicInfoCount: basicInfoCount,
+                    startQuestionNum: startQuestionNum,
+                    answers: answers
+                };
+            } else if (ext === 'json') {
+                bankData = JSON.parse(content);
+                // 验证必要字段
+                if (!bankData.name || !bankData.answers) throw new Error('JSON 格式无效：缺少 name 或 answers');
+            } else {
+                throw new Error('不支持的文件格式，请使用 .json 或 .csv 文件');
+            }
+            
+            return bankData;
+        }
+
+        // 处理拖放文件
+        async function handleDrop(event, type) {
+            event.preventDefault();
+            const targetDiv = type === 'bank' ? document.getElementById('bankPreview') : document.getElementById('matchBankPreview');
+            targetDiv.classList.remove('drag-over');
+            
+            const files = event.dataTransfer.files;
+            if (files.length === 0) return;
+            
+            const importedBanks = [];
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.name.match(/\.(json|csv)$/i)) {
+                    importedBanks.push({ error: `不支持的文件类型: ${file.name}，请使用 .json 或 .csv 文件`, path: file.name });
+                    continue;
+                }
+                try {
+                    const content = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = e => resolve(e.target.result);
+                        reader.onerror = e => reject(e);
+                        reader.readAsText(file, 'utf-8');
+                    });
+                    const bankData = await parseBankFromFileContent(content, file.name);
+                    importedBanks.push({
+                        ...bankData,
+                        originalPath: file.name,
+                        importedAt: new Date().toISOString()
+                    });
+                } catch (err) {
+                    importedBanks.push({ error: `解析失败: ${err.message}`, path: file.name });
+                }
+            }
+            
+            if (type === 'bank') {
+                // 主题库导入
+                const successfulCount = importedBanks.filter(b => !b.error).length;
+                showImportResults(importedBanks, successfulCount, importedBanks.length);
+            } else {
+                // 题目匹配库导入
+                const successfulCount = importedBanks.filter(b => !b.error).length;
+                showMatchImportResults(importedBanks, successfulCount, importedBanks.length);
+            }
+        }
+
+        // 初始化拖放区域
+        function initDragDrop() {
+            const bankPreview = document.getElementById('bankPreview');
+            const matchPreview = document.getElementById('matchBankPreview');
+            
+            function addDragEvents(element, type) {
+                element.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    element.classList.add('drag-over');
+                });
+                element.addEventListener('dragleave', () => {
+                    element.classList.remove('drag-over');
+                });
+                element.addEventListener('drop', (e) => {
+                    handleDrop(e, type);
+                });
+            }
+            
+            if (bankPreview) addDragEvents(bankPreview, 'bank');
+            if (matchPreview) addDragEvents(matchPreview, 'match');
         }
 
         function backupF12Handler() {
@@ -2381,6 +2552,10 @@
             document.getElementById('bankSelect').value = selectedBank;
             updateBankPreview();
             log(`已删除题库: ${bankToDelete}`, 'success');
+            
+            // 弹出成功提示
+            showNotification('删除成功', `题库 "${bankToDelete}" 已成功删除`, 'success');
+            
             closeDeleteConfirm();
         }
         
@@ -2462,7 +2637,7 @@
                     basicInfoCount: bank.basicInfoCount || 2,
                     startQuestionNum: bank.startQuestionNum || 3,
                     answers: bank.answers,
-                    exportInfo: { version: 'V8.4.3', exportedAt: new Date().toISOString(), totalQuestions, basicInfoCount: bank.basicInfoCount || 2 }
+                    exportInfo: { version: 'V8.6.2', exportedAt: new Date().toISOString(), totalQuestions, basicInfoCount: bank.basicInfoCount || 2 }
                 });
                 if (result.success) {
                     const sizeInKB = (result.size / 1024).toFixed(2);
@@ -2537,6 +2712,9 @@
         }
 
         function showImportResults(importedBanks, successfulCount, totalCount) {
+            const validBanks = importedBanks.filter(b => !b.error);
+            const hasConflict = validBanks.some(bank => questionBanks[bank.name]);
+
             const contentDiv = document.getElementById('importResultContent');
             let html = `
                 <div style="margin-bottom: 20px;">
@@ -2549,7 +2727,7 @@
                     <h4 style="color: #8a8aff;">题库列表</h4>
                     <div style="max-height: 300px; overflow-y: auto;">
             `;
-            const validBanks = importedBanks.filter(b => !b.error);
+            
             if (validBanks.length > 0) {
                 html += `<div style="margin-bottom: 15px;"><h5 style="color: #4CAF50;">可导入的题库</h5>`;
                 validBanks.forEach((bank, index) => {
@@ -2592,7 +2770,7 @@
             html += `
                             </div>
                         </div>
-                        <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-top: 20px;">
+                        <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-top: 20px; ${hasConflict ? '' : 'display: none;'}" id="importOptionsContainer">
                             <h5 style="color: #8a8aff; margin-bottom: 10px;">导入选项</h5>
                             <div style="display: flex; gap: 15px; align-items: center;">
                                 <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -2608,10 +2786,44 @@
                     `;
             contentDiv.innerHTML = html;
             window._pendingImportBanks = validBanks;
+            
+            // 如果有重名，设置互斥逻辑
+            if (hasConflict) {
+                const overwriteCb = document.getElementById('overwriteExisting');
+                const renameCb = document.getElementById('renameIfExists');
+                if (overwriteCb && renameCb) {
+                    renameCb.checked = true;
+                    overwriteCb.checked = false;
+                    overwriteCb.addEventListener('change', function() {
+                        if (this.checked) renameCb.checked = false;
+                    });
+                    renameCb.addEventListener('change', function() {
+                        if (this.checked) overwriteCb.checked = false;
+                    });
+                }
+            }
+            
             document.getElementById('importResultModal').style.display = 'flex';
         }
 
         function confirmImportBanks() {
+            // 如果当前有等待导入的题目匹配库，则调用对应的处理函数
+            if (window._pendingMatchImportBanks && window._pendingMatchImportBanks.length > 0 && typeof window.confirmMatchImportBanks === 'function') {
+                window.confirmMatchImportBanks();
+                return;
+            }
+            // 检查导入选项区域是否可见（即有重名冲突）
+            const optionsContainer = document.getElementById('importOptionsContainer');
+            if (optionsContainer && optionsContainer.style.display !== 'none') {
+                const overwrite = document.getElementById('overwriteExisting');
+                const rename = document.getElementById('renameIfExists');
+                // 如果两个选项都未选中
+                if ((!overwrite || !overwrite.checked) && (!rename || !rename.checked)) {
+                    showNotification('导入失败', '请选择一个导入选项（覆盖或重命名）', 'error');
+                    return;
+                }
+            }
+
             const pendingBanks = window._pendingImportBanks || [];
             const overwriteExisting = document.getElementById('overwriteExisting').checked;
             const renameIfExists = document.getElementById('renameIfExists').checked;
@@ -2840,7 +3052,7 @@
         
         window.clearLogs = function() { document.getElementById('statusContent').innerHTML = ''; log('日志已清空', 'info'); };
 
-        // ==================== 题目匹配独立模块（V8.4.3新增）====================
+        // ==================== 题目匹配独立模块（V8.6.2新增）====================
         // 存储结构与主题库完全一致：{ name, description, basicInfoCount, startQuestionNum, answers }
         (function(){
             'use strict';
@@ -3268,7 +3480,7 @@
                         startQuestionNum: bank.startQuestionNum || 3,
                         answers: bank.answers || {},
                         exportInfo: {
-                            version: 'V8.4.3',
+                            version: 'V8.6.2',
                             exportedAt: new Date().toISOString(),
                             totalQuestions: total,
                             basicInfoCount: bank.basicInfoCount || 2
@@ -3316,6 +3528,10 @@
 
             function showMatchImportResults(importedBanks, successfulCount, totalCount) {
                 const contentDiv = document.getElementById('importResultContent');
+                const validBanks = importedBanks.filter(b => !b.error);
+                // 判断是否有重名（在题目匹配库中）
+                const hasConflict = validBanks.some(bank => window.matchQuestionBanks[bank.name]);
+                
                 let html = `
                     <div style="margin-bottom: 20px;">
                         <h4 style="color: #8a8aff;">导入结果</h4>
@@ -3327,7 +3543,6 @@
                         <h4 style="color: #8a8aff;">题库列表</h4>
                         <div style="max-height: 300px; overflow-y: auto;">
                 `;
-                const validBanks = importedBanks.filter(b => !b.error);
                 if (validBanks.length > 0) {
                     html += `<div style="margin-bottom: 15px;"><h5 style="color: #4CAF50;">可导入的题目匹配库</h5>`;
                     validBanks.forEach((bank, index) => {
@@ -3370,7 +3585,7 @@
                 html += `
                                 </div>
                             </div>
-                            <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-top: 20px;">
+                            <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-top: 20px; ${hasConflict ? '' : 'display: none;'}" id="matchImportOptionsContainer">
                                 <h5 style="color: #8a8aff; margin-bottom: 10px;">导入选项</h5>
                                 <div style="display: flex; gap: 15px; align-items: center;">
                                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
@@ -3386,16 +3601,44 @@
                         `;
                 contentDiv.innerHTML = html;
                 window._pendingMatchImportBanks = validBanks;
+                
+                // 如果有重名，设置互斥逻辑
+                if (hasConflict) {
+                    const overwriteCb = document.getElementById('matchOverwriteExisting');
+                    const renameCb = document.getElementById('matchRenameIfExists');
+                    if (overwriteCb && renameCb) {
+                        renameCb.checked = true;
+                        overwriteCb.checked = false;
+                        overwriteCb.addEventListener('change', function() {
+                            if (this.checked) renameCb.checked = false;
+                        });
+                        renameCb.addEventListener('change', function() {
+                            if (this.checked) overwriteCb.checked = false;
+                        });
+                    }
+                }
+                
                 document.getElementById('importResultModal').style.display = 'flex';
-                // 重新绑定确认按钮的事件（原来绑定的可能是主题库的，这里需要切换）
-                const confirmBtn = document.getElementById('confirmImportBtn');
-                // 移除原有事件，重新绑定
-                const newConfirmBtn = confirmBtn.cloneNode(true);
-                confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-                newConfirmBtn.addEventListener('click', confirmMatchImportBanks);
             }
+            window.showMatchImportResults = showMatchImportResults;
 
             function confirmMatchImportBanks() {
+                // 如果没有待导入的题目匹配库，误调用，直接返回
+                if (!window._pendingMatchImportBanks || window._pendingMatchImportBanks.length === 0) {
+                    console.warn('confirmMatchImportBanks 被调用但无待导入的题目匹配库，已忽略');
+                    return;
+                }
+                // 检查题目匹配库导入选项区域是否可见
+                const optionsContainer = document.getElementById('matchImportOptionsContainer');
+                if (optionsContainer && optionsContainer.style.display !== 'none') {
+                    const overwrite = document.getElementById('matchOverwriteExisting');
+                    const rename = document.getElementById('matchRenameIfExists');
+                    if ((!overwrite || !overwrite.checked) && (!rename || !rename.checked)) {
+                        showNotification('导入失败', '请选择一个导入选项（覆盖或重命名）', 'error');
+                        return;
+                    }
+                }
+
                 const pendingBanks = window._pendingMatchImportBanks || [];
                 const overwriteExisting = document.getElementById('matchOverwriteExisting').checked;
                 const renameIfExists = document.getElementById('matchRenameIfExists').checked;
@@ -3444,6 +3687,7 @@
                 delete window._pendingMatchImportBanks;
                 updateMatchCheckboxState();
             }
+            window.confirmMatchImportBanks = confirmMatchImportBanks;
 
             function showMatchBankInfo() {
                 const bank = window.matchQuestionBanks[window.selectedMatchBank];
@@ -3513,7 +3757,11 @@
                         window.selectedMatchBank = Object.keys(window.matchQuestionBanks)[0] || null;
                         updateMatchBankSelect();
                         updateMatchBankPreview();
-                        log(`🗑️ 已删除题目匹配库: ${name}`, 'success');
+                        log(`已删除题目匹配库: ${name}`, 'success');
+                        
+                        // 弹出成功提示
+                        showNotification('删除成功', `题目匹配库 "${name}" 已成功删除`, 'success');
+                        
                         updateMatchCheckboxState();
                     }
                     document.getElementById('deleteMatchConfirmModal').style.display = 'none';
